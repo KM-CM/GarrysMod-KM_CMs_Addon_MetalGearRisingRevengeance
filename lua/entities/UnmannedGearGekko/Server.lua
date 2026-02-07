@@ -20,6 +20,35 @@ function ENT:Initialize()
 	BaseClass.Initialize( self )
 end
 
+local util_ScreenShake = util.ScreenShake
+
+function ENT:OnLandOnGround( pLandedOn )
+	self.sCallMeInRunBehaviour = "Land"
+	self.fCallMeInRunBehaviour = function( self, MyTable )
+		util_ScreenShake( self:GetPos() + self:OBBCenter(), 1024, 15, 4, 4096, true )
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		self:EmitSound "GekkoLand"
+		if !MyTable.bCharging then
+			MyTable.AnimationSystemHalt( self, MyTable )
+			MyTable.PlaySequenceAndWait( self, "land", 1 )
+		end
+		return true
+	end
+end
+
+function ENT:Think()
+	self.m_sIdleSequence = self:IsOnGround() && "idle" || "jump"
+	return BaseClass.Think( self )
+end
+
 function ENT:OnKilled( ... )
 	if BaseClass.OnKilled( self, ... ) then return end
 	self:Remove()
@@ -36,9 +65,9 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	local f = flSpeed * ACCELERATION_NORMAL
 	self.loco:SetAcceleration( f )
 	self.loco:SetDeceleration( f )
-	self.loco:SetJumpHeight( 256 )
+	self.loco:SetJumpHeight( 832 )
 	local f = GetVelocity( self ):Length()
-	if f <= 12 then self:PromoteSequence "idle"
+	if f <= 12 || !self:IsOnGround() then self:PromoteSequence( self.m_sIdleSequence )
 	elseif f <= ( self.flWalkSpeed * 1.1 ) then
 		self:PromoteSequence( "walk", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) )
 	else
@@ -55,6 +84,7 @@ function ENT:DoRoar()
 		self:EmitSound "GekkoPreTaunt"
 		timer.Simple( .8, function()
 			if !IsValid( self ) then return end
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 512, 15, 4, 4096, true )
 			self:EmitSound "GekkoTaunt"
 		end )
 		MyTable.AnimationSystemHalt( self, MyTable )
@@ -69,6 +99,7 @@ function ENT:DoShakeOff()
 		self.bTaunting = true
 		timer.Simple( .33, function()
 			if !IsValid( self ) then return end
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 512, 15, 4, 4096, true )
 			self:EmitSound "GekkoShakeOffTaunt"
 		end )
 		MyTable.AnimationSystemHalt( self, MyTable )
@@ -139,7 +170,7 @@ ENT.flChargeTimeMax = 20
 ENT.flChargeSpeed = 1000
 ENT.flChargeTurnRate = 64
 Actor_RegisterSchedule( "GekkoCharge", function( self, sched, MyTable )
-	sched.bCharging = true
+	MyTable.bCharging = true
 	MyTable.flOverrideTurnRateThisTick = MyTable.flChargeTurnRate
 	if !sched.m_bInitialized then
 		timer.Simple( .3, function()
@@ -201,7 +232,7 @@ Actor_RegisterSchedule( "GekkoCharge", function( self, sched, MyTable )
 	self.loco:SetVelocity( vTarget )
 	self:HandleJumpingAlongPath( pEnemyPath, flSpeed, tFilter )
 	local tHit, f, flNextHitSound, bStop = {}, self:BoundingRadius(), 0
-	util.TraceHull {
+	if util.TraceHull( {
 		start = self:GetPos(),
 		endpos = self:GetPos() + self:GetForward() * 92,
 		mins = MyTable.vHullMins + Vector( 0, 0, 24 ),
@@ -217,6 +248,7 @@ Actor_RegisterSchedule( "GekkoCharge", function( self, sched, MyTable )
 			dDamage:SetDamage( math.Clamp( pEntity:GetMaxHealth(), 512, 65536 ) )
 			pEntity:TakeDamageInfo( dDamage )
 			if CurTime() > flNextHitSound then
+				util_ScreenShake( self:GetPos() + self:OBBCenter(), 1024, 15, 4, 4096, true )
 				self:EmitSound "GekkoImpact"
 				self:EmitSound "GekkoImpact"
 				self:EmitSound "GekkoImpact"
@@ -226,7 +258,7 @@ Actor_RegisterSchedule( "GekkoCharge", function( self, sched, MyTable )
 			return false
 		end,
 		mask = MASK_SOLID
-	}
+	} ).HitWorld then util_ScreenShake( self:GetPos() + self:OBBCenter(), 1024, 15, 4, 4096, true ) bStop = true end
 	if bStop then
 		MyTable.AnimationSystemHalt( self, MyTable )
 		MyTable.PlaySequenceAndWait( self, "charge_end", 1 )
@@ -257,7 +289,7 @@ Actor_RegisterSchedule( "GekkoAttack", function( self, sched, MyTable )
 	if iState == 1 && math.random( 2 ) == 1 then iState = 2 end
 	sched.iState = iState
 	timer.Simple( .1, function()
-		local bHit, bHitEnemy
+		local bHit, bHitEnemy, bShake
 		if !IsValid( self ) then return end
 		if util.TraceHull( {
 			start = self:GetPos(),
@@ -272,12 +304,13 @@ Actor_RegisterSchedule( "GekkoAttack", function( self, sched, MyTable )
 				dDamage:SetDamageType( DMG_CLUB )
 				dDamage:SetDamage( math.Clamp( pEntity:GetMaxHealth(), 512, 32768 ) )
 				pEntity:TakeDamageInfo( dDamage )
-				if !bHit then self:EmitSound "GekkoImpact" bHit = true end
+				if !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
 				return false
 			end,
 			mask = MASK_SOLID
 		// In case we hit the world
-		} ).Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true end
+		} ).Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
+		util_ScreenShake( self:GetPos() + self:OBBCenter(), bShake && 512 || 24, 1, 1, 4096, true )
 		if iState != 2 && !bHitEnemy then MyTable.Schedule = nil end
 	end )
 	MyTable.AnimationSystemHalt( self, MyTable )
@@ -361,6 +394,7 @@ Actor_RegisterSchedule( "UnmannedGearGekkoCombat", function( self, sched, MyTabl
 		MyTable.vaAimTargetBody = ( pGoal.pos - self:GetPos() ):Angle()
 		MyTable.vaAimTargetPose = MyTable.vaAimTargetBody
 	end
+	if !self:IsOnGround() then return end
 	local bHit
 	util.TraceHull {
 		start = self:GetPos(),
@@ -376,32 +410,14 @@ Actor_RegisterSchedule( "UnmannedGearGekkoCombat", function( self, sched, MyTabl
 	// Never charge or taunt if we can just smash 'em
 	if bHit then MyTable.SetSchedule( self, "GekkoAttack", MyTable ) return end
 	pEnemyPath:MoveCursorToClosestPosition( self:GetPos() )
-	local flDistance = ( pEnemyPath:GetLength() - pEnemyPath:GetCursorPosition() )
-	// if flDistance <= 256 then return end
-	local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .5
-	if flDistance > f then return end
-	local flCharging, flNotCharging = 0, 1
-	for pAlly in pairs( self:GetAlliesByClass() || {} ) do
-		if !IsValid( pAlly ) || pAlly == self then continue end
-		if !pAlly.bCanCharge then continue end
-		local pEnemyPath = pAlly.pEnemyPath
-		if !pEnemyPath then continue end
-		local flTime = pAlly.flChargeTimeMin
-		if !flTime then continue end
-		local flSpeed = pAlly.flChargeSpeed
-		if !flSpeed then continue end
-		pEnemyPath:MoveCursorToClosestPosition( pAlly:GetPos() )
-		local flDistance = ( pEnemyPath:GetLength() - pEnemyPath:GetCursorPosition() )
-		if flDistance > ( flSpeed * flTime * .5 ) then continue end
-		flNotCharging = flNotCharging + 1
-		if pAlly.bCharging then flCharging = flCharging + 1 end
-	end
-	if flCharging == 0 then flCharging = 1 end
-	local f = flCharging + flNotCharging
-	if math.Rand( 0, 32768 * ( ( flNotCharging / flCharging ) / f ) * FrameTime() ) <= 1 then
+	local flDistance = pEnemyPath:GetLength() - pEnemyPath:GetCursorPosition()
+	if math.Rand( 0, flDistance * 16 * FrameTime() ) <= 1 then
 		if math.random( 2 ) == 1 then self:DoRoar() else self:DoShakeOff() end
 		return
 	end
-	if math.Rand( 0, 32768 * ( ( flCharging / flNotCharging ) * f ) * FrameTime() ) > 1 then return end
+	// if flDistance <= 256 then return end
+	local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .5
+	if flDistance > f then return end
+	if math.Rand( 0, flDistance * 16 * FrameTime() ) > 1 then return end
 	MyTable.SetSchedule( self, "GekkoCharge", MyTable )
 end )

@@ -8,7 +8,7 @@ scripted_ents.Register( ENT, "UnmannedGearGekko" )
 ENT.CATEGORIZE = { Gekko = true }
 
 // NOTE: This MUST be cutoff by GekkoTaunt, or it sounds ass
-sound.Add( {
+sound.Add {
 	name = "GekkoPreTaunt",
 	channel = CHAN_VOICE,
 	volume = 1,
@@ -19,9 +19,9 @@ sound.Add( {
 		"^Gekko/Taunt/2.wav",
 		"^Gekko/Taunt/3.wav"
 	}
-} )
+}
 
-sound.Add( {
+sound.Add {
 	name = "GekkoTaunt",
 	channel = CHAN_VOICE,
 	volume = 1,
@@ -32,9 +32,9 @@ sound.Add( {
 		"^Gekko/Taunt/2.wav",
 		"^Gekko/Taunt/3.wav"
 	}
-} )
+}
 
-sound.Add( {
+sound.Add {
 	name = "GekkoShakeOffTaunt",
 	channel = CHAN_VOICE,
 	volume = 1,
@@ -45,9 +45,9 @@ sound.Add( {
 		"^Gekko/Taunt/2.wav",
 		"^Gekko/Taunt/3.wav"
 	}
-} )
+}
 
-sound.Add( {
+sound.Add {
 	name = "GekkoImpact",
 	channel = CHAN_AUTO,
 	volume = 1,
@@ -57,9 +57,9 @@ sound.Add( {
 		"^Gekko/ImpactA.wav",
 		"^Gekko/ImpactB.wav"
 	}
-} )
+}
 
-sound.Add( {
+sound.Add {
 	name = "GekkoCharge",
 	channel = CHAN_AUTO,
 	volume = 1,
@@ -69,6 +69,30 @@ sound.Add( {
 		"^Gekko/ChargeA.wav",
 		"^Gekko/ChargeB.wav"
 	}
-} )
+}
+
+sound.Add {
+	name = "GekkoStep",
+	channel = CHAN_STATIC,
+	volume = 1,
+	level = 80,
+	pitch = { 90, 110 },
+	sound = {
+		"drgbase/mgr/l55/vc/step1.wav",
+		"drgbase/mgr/l55/vc/step2.wav"
+	}
+}
+
+sound.Add {
+	name = "GekkoLand",
+	channel = CHAN_STATIC,
+	volume = 1,
+	level = 100,
+	pitch = { 90, 110 },
+	sound = {
+		"drgbase/mgr/l55/vc/step1.wav",
+		"drgbase/mgr/l55/vc/step2.wav"
+	}
+}
 
 if SERVER then include "Server.lua" end
