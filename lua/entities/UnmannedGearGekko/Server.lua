@@ -3,6 +3,8 @@ DEFINE_BASECLASS "BaseActor"
 if !CLASS_DESPERADO_AND_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_AND_WORLD_MARSHAL" end
 ENT.iDefaultClass = CLASS_DESPERADO_AND_WORLD_MARSHAL
 
+ENT.bNightVision = true
+
 ENT.vHullMins = Vector( -36, -36 )
 ENT.vHullMaxs = Vector( 36, 36, 170 )
 ENT.vHullDuckMins = ENT.vHullMins
@@ -58,7 +60,8 @@ function ENT:Initialize()
 	self:SetHealth( 131072 )
 	self:SetMaxHealth( 131072 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
-	self:PhysicsInit( SOLID_OBB )
+	//	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 9072 ) end
+	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 85 ) end
 	BaseClass.Initialize( self )
 end
 
@@ -85,9 +88,9 @@ function ENT:OnKilled( ... )
 	self:Remove()
 end
 
-ENT.flTopSpeed = 784
+ENT.flTopSpeed = 512
 ENT.flRunSpeed = ENT.flTopSpeed
-ENT.flWalkSpeed = 128
+ENT.flWalkSpeed = 96
 
 ENT.flTurnRate = 128
 
@@ -184,6 +187,8 @@ RegisterSchedule( "GekkoBioMechanicalInterfaceError", function( self, sched, MyT
 end )
 
 ENT.flLegStatus = 1
+
+function ENT:BloodSplatter() end
 
 function ENT:OnTakeDamage( dDamage )
 	local flHealth = Lerp( .25, self:Health(), self:GetMaxHealth() )
