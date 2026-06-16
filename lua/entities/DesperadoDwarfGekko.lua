@@ -22,6 +22,8 @@ if !SERVER then return end
 
 if !CLASS_DESPERADO_AND_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_AND_WORLD_MARSHAL" end
 
+ENT.bNightVision = true
+
 ENT.iDefaultClass = CLASS_DESPERADO_AND_WORLD_MARSHAL
 
 ENT.bCannotCarryWeapons = true
