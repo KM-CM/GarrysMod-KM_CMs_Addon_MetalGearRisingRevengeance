@@ -60,8 +60,7 @@ function ENT:Initialize()
 	self:SetHealth( 131072 )
 	self:SetMaxHealth( 131072 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
-	//	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 9072 ) end
-	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 85 ) end
+	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 9072 ) end
 	BaseClass.Initialize( self )
 end
 
