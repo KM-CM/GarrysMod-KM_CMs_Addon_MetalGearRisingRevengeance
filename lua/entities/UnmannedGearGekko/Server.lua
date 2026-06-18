@@ -64,7 +64,24 @@ function ENT:Initialize()
 	BaseClass.Initialize( self )
 end
 
-function ENT:OnLandOnGround( pLandedOn )
+function ENT:OnLandOnGround()
+	function self:GAME_OnHurtSomething( pEntity, dDamage )
+		if self:Disposition( pEntity ) == D_LI then return true end
+		local v = pEntity:GetPos()
+		v:Add( pEntity:OBBCenter() )
+		v:Sub( self:GetPos() )
+		v:Normalize()
+		v[ 3 ] = v[ 3 ] + math.Rand( .15, .3 )
+		v = LerpVector( math.Rand( 0, .2 ), v, VectorRand() )
+		v:Normalize()
+		v:Mul( math.Rand( 760 * 85, 780 * 85 ) )
+		dDamage:SetDamageForce( v )
+		dDamage:SetDamage( 32768 )
+		// I would use DMG_CRUSH, but some entities (ex: npc_antlionguard), for SOME REASON, completely ignore it!
+		dDamage:SetDamageType( DMG_CLUB )
+	end
+	util.BlastDamage( self, self, self:GetPos(), self:BoundingRadius() * 2, 1 )
+	self.GAME_OnHurtSomething = nil
 	self.sCallMeInRunBehaviour = "Land"
 	self.fCallMeInRunBehaviour = function( self, MyTable )
 		util_ScreenShake( self:GetPos() + self:OBBCenter(), 1024, 15, 4, 4096, true )
@@ -94,11 +111,12 @@ ENT.flWalkSpeed = 96
 ENT.flTurnRate = 128
 
 function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
-	self.loco:SetDesiredSpeed( flSpeed )
+	local pLocomotion = self.loco
+	pLocomotion:SetDesiredSpeed( flSpeed )
 	local f = self.flTopSpeed * ACCELERATION_NORMAL
-	self.loco:SetAcceleration( f )
-	self.loco:SetDeceleration( f )
-	self.loco:SetJumpHeight( 1640 )
+	pLocomotion:SetAcceleration( f )
+	pLocomotion:SetDeceleration( f )
+	pLocomotion:SetJumpHeight( 1640 )
 	local f = GetVelocity( self ):Length()
 	if f <= 12 || !self:IsOnGround() then self:PromoteSequence( self.m_sIdleSequence )
 	elseif f <= ( self.flWalkSpeed * 1.1 ) then
@@ -109,7 +127,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	self:HandleJumpingAlongPath( pPath, flSpeed, tFilter )
 end
 
-function ENT:Stand() self.loco:SetJumpHeight( 1640 ) end
+function ENT:Stand() self.loco:SetJumpHeight( 1640 ) BaseClass.Stand( self ) end
 
 // MOO!
 function ENT:DoRoar()
@@ -149,7 +167,7 @@ end
 // which avoids hardware damage and bad posture. Unlike AI Errors, this is an issue with our
 // biological part, therefore we can still see and hear while in it.
 ENT.flWrongLegPing = 0
-RegisterSchedule( "GekkoBioMechanicalInterfaceError", function( self, sched, MyTable )
+RegisterSchedule( "GekkoBrainMachineInterfaceError", function( self, sched, MyTable )
 	if !sched.m_bInitialized then
 		MyTable.AnimationSystemHalt( self, MyTable )
 		MyTable.PlaySequenceAndWait( self, "stun_start", 1 )
@@ -160,7 +178,7 @@ RegisterSchedule( "GekkoBioMechanicalInterfaceError", function( self, sched, MyT
 	// We sometimes shake off slower or faster intentionally, to make the enemy unsure if the BMI Error is resolved
 	// NOTE: The calibration test is important! We sometimes estimate it incorrectly, as our nerves may be damaged!
 	local flLegStatus, flWrongLegPing = MyTable.flLegStatus, MyTable.flWrongLegPing
-	if flWrongLegPing <= 0 && math.Rand( 0, math.Remap( flLegStatus ^ 3, 0, 1, 100000, 1 ) * FrameTime() ) <= 1 then
+	if flWrongLegPing <= 0 && math.random() <= math.Remap( flLegStatus ^ 3, 0, 1, .00001, 1 ) * FrameTime() then
 		if flLegStatus >= 1 then
 			MyTable.Schedule = nil
 			MyTable.AnimationSystemHalt( self, MyTable )
@@ -183,22 +201,21 @@ RegisterSchedule( "GekkoBioMechanicalInterfaceError", function( self, sched, MyT
 	// It will automatically get into a stable posture and perform repeating
 	// oscillations when it loses connection with us.
 	MyTable.PromoteSequence( self, "stun", 1 )
+	MyTable.Stand( self, MyTable )
 end )
 
 ENT.flLegStatus = 1
-
-function ENT:BloodSplatter() end
 
 function ENT:OnTakeDamage( dDamage )
 	local flHealth = Lerp( .25, self:Health(), self:GetMaxHealth() )
 	if dDamage:IsDamageType( DMG_CLUB ) then flHealth = flHealth * 24
 	// Unlike being kicked, being crushed is blunt damage that is not directed at our parts
-	elseif dDamage:IsDamageType( DMG_CRUSH ) then flHealth = flHealth * 48 end
+	elseif dDamage:IsDamageType( DMG_FALL ) then flHealth = flHealth * 48 end
 	local f = math.Clamp( self.flLegStatus - dDamage:GetDamage() / flHealth * 4, 0, 1 )
 	self.flLegStatus = f
 	local pSchedule = self.Schedule
-	if !( pSchedule && pSchedule.m_sName == "GekkoBioMechanicalInterfaceError" ) then
-		if self.flLegStatus <= math.Rand( 0, dDamage:GetDamage() / flHealth * 100 ) then self:SetSchedule "GekkoBioMechanicalInterfaceError" end
+	if !( pSchedule && pSchedule.m_sName == "GekkoBrainMachineInterfaceError" ) then
+		if self.flLegStatus <= math.Rand( 0, dDamage:GetDamage() / flHealth * 100 ) then self:SetSchedule "GekkoBrainMachineInterfaceError" end
 	end
 	return BaseClass.OnTakeDamage( self, dDamage )
 end
@@ -209,6 +226,8 @@ ENT.flChargeTimeMax = 20
 ENT.flChargeSpeed = 1536
 ENT.flChargeTurnRate = 64
 RegisterSchedule( "GekkoCharge", function( self, sched, MyTable )
+	MyTable.flOverrideBodyStiffnessThisTick = 3
+	MyTable.flOverrideBodyDampingThisTick = -6
 	MyTable.bCharging = true
 	MyTable.flOverrideTurnRateThisTick = MyTable.flChargeTurnRate
 	if !sched.m_bInitialized then
@@ -294,7 +313,7 @@ RegisterSchedule( "GekkoCharge", function( self, sched, MyTable )
 			v[ 3 ] = v[ 3 ] + math.Rand( .15, .3 )
 			v = LerpVector( math.Rand( 0, .5 ), v, VectorRand() )
 			v:Normalize()
-			v:Mul( 4 * flFraction * 1024 * math.Rand( 80, 128 ) )
+			v:Mul( flFraction * math.Rand( 1400 * 85, 1600 * 85 ) )
 			dDamage:SetDamageForce( v )
 			pEntity:TakeDamageInfo( dDamage )
 			if CurTime() > flNextHitSound then
@@ -315,6 +334,8 @@ RegisterSchedule( "GekkoCharge", function( self, sched, MyTable )
 		return true
 	end
 end )
+
+local tAttackSequences = { "att1", "att2", "att1_2", "att2_2" }
 
 RegisterSchedule( "GekkoAttack", function( self, sched, MyTable )
 	local pEnemy, pTrueEnemy = MyTable.Enemy
@@ -364,7 +385,7 @@ RegisterSchedule( "GekkoAttack", function( self, sched, MyTable )
 				v[ 3 ] = v[ 3 ] + math.Rand( .15, .3 )
 				v = LerpVector( math.Rand( 0, .2 ), v, VectorRand() )
 				v:Normalize()
-				v:Mul( math.Rand( 2048 * 80, 2048 * 128 ) / flMultiplier )
+				v:Mul( math.Rand( 1000 * 85, 1200 * 85 ) / flMultiplier )
 				dDamage:SetDamageForce( v )
 				pEntity:TakeDamageInfo( dDamage )
 				if !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
@@ -377,7 +398,7 @@ RegisterSchedule( "GekkoAttack", function( self, sched, MyTable )
 		if !bHitEnemy then MyTable.Schedule = nil end
 	end )
 	MyTable.AnimationSystemHalt( self, MyTable )
-	MyTable.PlaySequenceAndWait( self, math.random( 2 ) == 1 && "att1_2" || "att2_2", flMultiplier )
+	MyTable.PlaySequenceAndWait( self, tAttackSequences[ math.random( 1, 4 ) ], flMultiplier )
 end )
 
 ENT.m_sDefaultIdleSchedule = "UnmannedGearGekkoIdle"
