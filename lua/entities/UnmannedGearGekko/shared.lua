@@ -45,18 +45,19 @@ sound.Add {
 	}
 }
 
-sound.Add {
-	name = "GekkoTauntShakeOff",
-	channel = CHAN_VOICE,
-	volume = 1,
-	level = 120,
-	pitch = { 60, 70 },
-	sound = {
-		"^Gekko/Taunt/1.wav",
-		"^Gekko/Taunt/2.wav",
-		"^Gekko/Taunt/3.wav"
-	}
-}
+// Read the commented out ENT:DoShakeOff() for why this is cut
+//	sound.Add {
+//		name = "GekkoTauntShakeOff",
+//		channel = CHAN_VOICE,
+//		volume = 1,
+//		level = 120,
+//		pitch = { 60, 70 },
+//		sound = {
+//			"^Gekko/Taunt/1.wav",
+//			"^Gekko/Taunt/2.wav",
+//			"^Gekko/Taunt/3.wav"
+//		}
+//	}
 
 sound.Add {
 	name = "GekkoLowing",

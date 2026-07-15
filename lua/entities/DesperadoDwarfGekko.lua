@@ -58,7 +58,7 @@ function ENT:OnKilled( ... )
 end
 
 ENT.m_sDefaultCombatSchedule = "DwarfGekkoCombat"
-RegisterSchedule( "DwarfGekkoCombat", function( self, sched, MyTable )
+RegisterSchedule( "DwarfGekkoCombat", { Execute = function( self, sched, MyTable )
 	if table.IsEmpty( MyTable.tEnemies ) then return true end
 	local pEnemy = MyTable.Enemy
 	if !IsValid( pEnemy ) then return true end
@@ -95,9 +95,9 @@ RegisterSchedule( "DwarfGekkoCombat", function( self, sched, MyTable )
 		MyTable.SetSchedule( self, "DwarfGekkoAttackGrab", MyTable )
 		//	return
 	end
-end )
+end } )
 
-RegisterSchedule( "DwarfGekkoAttackGrab", function( self, sched, MyTable )
+RegisterSchedule( "DwarfGekkoAttackGrab", { Execute = function( self, sched, MyTable )
 	local pEnemy, pTrueEnemy = MyTable.Enemy
 	if IsValid( pEnemy ) then
 		local pE, pTE = self:SetupEnemy( pEnemy )
@@ -140,7 +140,7 @@ RegisterSchedule( "DwarfGekkoAttackGrab", function( self, sched, MyTable )
 	MyTable.PromoteSequenceInstant( self, MyTable.m_sIdleSequence )
 	MyTable.AnimationSystemTick( self, MyTable )
 	return true
-end )
+end } )
 
 function ENT:Initialize()
 	self:SetModel "models/dughoo/mgrr2025/tripod3.mdl"
