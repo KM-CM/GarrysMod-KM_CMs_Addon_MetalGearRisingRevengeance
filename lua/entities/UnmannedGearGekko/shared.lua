@@ -19,7 +19,6 @@ sound.Add {
 	}
 }
 
-
 sound.Add {
 	name = "GekkoSwing",
 	channel = CHAN_STATIC,

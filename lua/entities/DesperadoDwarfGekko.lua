@@ -6,7 +6,7 @@ scripted_ents.Register( ENT, "DesperadoDwarfGekko" )
 list.Set( "NPC", "DesperadoDwarfGekko", {
 	Name = "#DesperadoDwarfGekko",
 	Class = "DesperadoDwarfGekko",
-	Category = "Desperado Enforcement LLC"
+	Category = "#DesperadoEnforcementLLC"
 } )
 
 sound.Add {
@@ -20,11 +20,11 @@ sound.Add {
 
 if !SERVER then return end
 
-if !CLASS_DESPERADO_AND_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_AND_WORLD_MARSHAL" end
+if !CLASS_DESPERADO_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_WORLD_MARSHAL" end
 
 ENT.bNightVision = true
 
-ENT.iDefaultClass = CLASS_DESPERADO_AND_WORLD_MARSHAL
+ENT.iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
 ENT.bCannotCarryWeapons = true
 

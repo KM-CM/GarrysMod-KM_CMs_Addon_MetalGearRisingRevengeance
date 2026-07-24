@@ -7,7 +7,7 @@ scripted_ents.Register( ENT, "WorldMarshalUnmannedGearGekko" )
 list.Set( "NPC", "WorldMarshalUnmannedGearGekko", {
 	Name = "#WorldMarshalUnmannedGearGekko",
 	Class = "WorldMarshalUnmannedGearGekko",
-	Category = "World Marshal PMC"
+	Category = "#WorldMarshal"
 } )
 
 if !SERVER then return end
