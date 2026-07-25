@@ -118,7 +118,7 @@ function ENT:OnKilled( ... )
 end
 
 ENT.flTopSpeed = 1371
-ENT.flRunSpeed = ENT.flTopSpeed
+ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 100
 
 ENT.flTurnRate = 128

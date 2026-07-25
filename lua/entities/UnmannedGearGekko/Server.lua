@@ -105,7 +105,7 @@ function ENT:OnKilled( ... )
 end
 
 ENT.flTopSpeed = 512
-ENT.flRunSpeed = ENT.flTopSpeed
+ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 96
 
 ENT.flTurnRate = 128
@@ -210,7 +210,7 @@ RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self,
 	// It will automatically get into a stable posture and perform repeating
 	// oscillations when it loses connection with us.
 	MyTable.PromoteSequence( self, "stun", 1 )
-	MyTable.Stand( self, MyTable )
+	MyTable.Stand( self )
 end } )
 
 ENT.flLegStatus = 1
@@ -506,7 +506,7 @@ RegisterSchedule( "UnmannedGearGekkoCombat", { Execute = function( self, sched, 
 		sched.flNextLow = CurTime() + math.Rand( 3, 4 )
 	end
 	local flDistance = pEnemyPath:GetLength() - pEnemyPath:GetCursorPosition()
-	if flDistance <= MyTable.flRunSpeed then return end
+	if flDistance <= MyTable.flJogSpeed then return end
 	if math.random() <= flDistance ^ 1.2 / 12288 * FrameTime() then
 		local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .5
 		if math.random( 3 ) == 1 then self:Taunt() return end

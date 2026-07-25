@@ -31,7 +31,7 @@ ENT.bCannotCarryWeapons = true
 ENT.m_sIdleSequence = "idle"
 
 ENT.flTopSpeed = 200
-ENT.flRunSpeed = ENT.flTopSpeed
+ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 100
 
 ENT.flTurnRate = 128
