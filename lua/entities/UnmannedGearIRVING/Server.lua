@@ -19,6 +19,9 @@ ENT.m_sIdleSequence = "idle"
 
 local util_ScreenShake = util.ScreenShake
 
+NOT_A_VOICELINE[ "Gekko/StepA.wav" ] = true
+NOT_A_VOICELINE[ "Gekko/StepB.wav" ] = true
+
 local function fChargeOStep( self ) util_ScreenShake( self:GetPos() + self:OBBCenter(), 24, 1, 1, 2048, true ) end
 
 ENT.tSequenceEvents = {
@@ -57,8 +60,8 @@ ENT.tSequenceEvents = {
 }
 
 function ENT:Initialize()
-	self:SetHealth( 131072 )
-	self:SetMaxHealth( 131072 )
+	self:SetHealth( 16384 )
+	self:SetMaxHealth( 16384 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
 	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 9072 ) end
 	BaseClass.Initialize( self )
@@ -78,7 +81,7 @@ function ENT:OnLandOnGround()
 		v:Normalize()
 		v:Mul( math.Rand( 760 * 85, 780 * 85 ) )
 		dDamage:SetDamageForce( v )
-		dDamage:SetDamage( 32768 )
+		dDamage:SetDamage( 8192 )
 		// I would use DMG_CRUSH, but some entities (let's not point fingers... anyway it's npc_antlionguard), for SOME REASON, completely ignore it!
 		dDamage:SetDamageType( DMG_CLUB )
 	end
@@ -224,10 +227,9 @@ end } )
 ENT.flLegStatus = 1
 
 function ENT:OnTakeDamage( dDamage )
+	dDamage:ScaleDamage( math.Remap( dDamage:GetDamage(), 0, self:Health(), .1, 1 / 3 ) )
 	local flHealth = Lerp( .25, self:Health(), self:GetMaxHealth() )
-	if dDamage:IsDamageType( DMG_CLUB ) then flHealth = flHealth * 24
-	// Unlike being kicked, being crushed is blunt damage that is not directed at our parts
-	elseif dDamage:IsDamageType( DMG_FALL ) then flHealth = flHealth * 48 end
+	if dDamage:IsDamageType( DMG_CLUB ) then flHealth = flHealth * 24 end
 	local f = math.Clamp( self.flLegStatus - dDamage:GetDamage() / flHealth * 4, 0, 1 )
 	self.flLegStatus = f
 	local pSchedule = self.Schedule
@@ -319,7 +321,7 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, sched, MyTable )
 			dDamage:SetAttacker( self )
 			dDamage:SetDamageType( DMG_CLUB )
 			local flFraction = GetVelocity( self ):Length() / self.flChargeSpeed
-			dDamage:SetDamage( flFraction * 65535 )
+			dDamage:SetDamage( flFraction * 8192 )
 			local v = pEntity:GetPos()
 			v:Add( pEntity:OBBCenter() )
 			v:Sub( self:GetPos() )
@@ -392,7 +394,7 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 				local dDamage = DamageInfo()
 				dDamage:SetAttacker( self )
 				dDamage:SetDamageType( DMG_CLUB )
-				dDamage:SetDamage( 32768 / flMultiplier )
+				dDamage:SetDamage( 4096 / flMultiplier )
 				local v = pEntity:GetPos()
 				v:Add( pEntity:OBBCenter() )
 				v:Sub( self:GetPos() )
@@ -416,55 +418,7 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 	MyTable.PlaySequenceAndWait( self, tAttackSequences[ math.random( 1, 4 ) ], flMultiplier )
 end } )
 
-ENT.m_sDefaultIdleSchedule = "UnmannedGearGekkoIdle"
 ENT.m_sDefaultCombatSchedule = "UnmannedGearGekkoCombat"
-
-RegisterSchedule( "UnmannedGearGekkoIdle", { Execute = function( self, sched, MyTable )
-	if IsValid( MyTable.Enemy ) then return true end
-	if CurTime() > ( sched.flStandTime || 0 ) then
-		if !sched.vGoal then
-			local tAllies = self:GetAlliesByClass()
-			local area, vec = self:GetLastKnownArea() || navmesh.GetNearestNavArea( self:GetPos() )
-			if !area then
-				sched.flStandTime = CurTime() + math.Rand( self.flIdleStandTimeMin, self.flIdleStandTimeMax )
-				self.vaAimTargetBody = nil
-				self.vaAimTargetPose = nil
-				sched.Path = nil
-				sched.vGoal = nil
-				return
-			end
-			local tQueue, tVisited, flDistSqr = { { area, 0 } }, {}, math.Rand( 0, 1024 )
-			flDistSqr = flDistSqr * flDistSqr
-			local bDisAllowWater = !self.bCanSwim
-			while !table.IsEmpty( tQueue ) do
-				local area, dist = unpack( table.remove( tQueue ) )
-				for _, t in ipairs( area:GetAdjacentAreaDistances() ) do
-					local new = t.area
-					if tVisited[ new:GetID() ] then continue end
-					if bDisAllowWater && area:IsUnderwater() then continue end
-					table.insert( tQueue, { new, dist + t.dist } )
-					tVisited[ new:GetID() ] = true
-				end
-				table.SortByMember( tQueue, 2 )
-				local v = area:GetRandomPoint()
-				if v:DistToSqr( self:GetPos() ) >= flDistSqr then vec = v break end
-			end
-			if vec then sched.vGoal = vec else sched.flStandTime = CurTime() + math.Rand( 0, 4 ) return end
-		end
-		if !sched.pPath then sched.pPath = Path "Follow" end
-		local goal = sched.pPath:GetCurrentGoal()
-		if goal then self.vaAimTargetBody = ( goal.pos - self:GetPos() ):Angle() self.vaAimTargetPose = self.vaAimTargetBody end
-		self:ComputePath( sched.pPath, sched.vGoal )
-		self:MoveAlongPath( sched.pPath, self.flWalkSpeed )
-		if math.abs( sched.pPath:GetCursorPosition() - sched.pPath:GetLength() ) <= self.flPathTolerance then
-			sched.flStandTime = CurTime() + math.Rand( self.flIdleStandTimeMin, self.flIdleStandTimeMax )
-			self.vaAimTargetBody = nil
-			self.vaAimTargetPose = nil
-			sched.pPath = nil
-			sched.vGoal = nil
-		end
-	else self.vaAimTargetBody = nil self.vaAimTargetPose = nil sched.pPath = nil sched.vGoal = nil self:Stand() end
-end } )
 
 RegisterSchedule( "UnmannedGearGekkoCombat", { Execute = function( self, sched, MyTable )
 	if table.IsEmpty( MyTable.tEnemies ) then return true end

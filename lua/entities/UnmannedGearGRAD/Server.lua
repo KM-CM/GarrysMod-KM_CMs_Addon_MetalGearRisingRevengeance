@@ -103,8 +103,8 @@ ENT.flBodyDamping = -120
 
 function ENT:Initialize()
 	self:SetModel "models/dughoo/mgrr2025/grad.mdl"
-	self:SetHealth( 1048576 )
-	self:SetMaxHealth( 1048576 )
+	self:SetHealth( 65536 )
+	self:SetMaxHealth( 65536 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
 	self:SetBloodColor( BLOOD_COLOR_MECH )
 	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 72576 ) end
@@ -406,5 +406,6 @@ RegisterSchedule( "UnmannedGearGRADBunker", {
 
 function ENT:OnTakeDamage( dDamage )
 	if BIOLOGICAL_ONLY_DAMAGE_TYPES[ dDamage:GetDamageType() ] then dDamage:ScaleDamage( 0 ) end
+	dDamage:ScaleDamage( math.Remap( dDamage:GetDamage(), 0, self:Health(), .1, 1 / 3 ) )
 	BaseClass.OnTakeDamage( self, dDamage )
 end

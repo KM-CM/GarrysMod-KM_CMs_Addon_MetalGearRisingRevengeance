@@ -94,6 +94,7 @@ sound.Add {
 		"^Gekko/StepB.wav"
 	}
 }
+
 sound.Add {
 	name = "GekkoStepJog",
 	channel = CHAN_STATIC,
