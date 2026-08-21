@@ -107,7 +107,7 @@ function ENT:Initialize()
 	self:SetMaxHealth( 65536 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
 	self:SetBloodColor( BLOOD_COLOR_MECH )
-	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 72576 ) end
+	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 36288 ) end
 	BaseClass.Initialize( self )
 	self:GrantDefaultSkills()
 end
