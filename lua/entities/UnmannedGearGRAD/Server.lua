@@ -296,14 +296,12 @@ RegisterSchedule( "UnmannedGearGRADCombat", { Execute = function( self, sched, M
 
 	local pEnemyPath = MyTable.pEnemyPath
 	if !pEnemyPath then pEnemyPath = Path "Follow" MyTable.pEnemyPath = pEnemyPath end
-	if LevelOfDetail( sched, "flNextRePath", .5 ) then MyTable.ComputeFlankPath( self, pEnemyPath, pEnemy, MyTable ) end
+	if LevelOfDetail( sched, "flNextRePath" ) then MyTable.ComputeFlankPath( self, pEnemyPath, pEnemy, MyTable ) end
 
 	MyTable.MoveAlongPath( self, pEnemyPath, MyTable.flTopSpeed )
 
 	local pGoal = pEnemyPath:GetCurrentGoal()
 	if pGoal then MyTable.vaAimTargetBody = ( pGoal.pos - self:GetPos() ):Angle() end
-
-	if !self:IsOnGround() then return end
 end } )
 
 local math_Rand = math.Rand

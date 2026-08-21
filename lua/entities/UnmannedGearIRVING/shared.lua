@@ -20,6 +20,24 @@ sound.Add {
 }
 
 sound.Add {
+	name = "GekkoStompA",
+	channel = CHAN_STATIC,
+	volume = 1,
+	level = 140,
+	pitch = 100,
+	sound = "physics/concrete/concrete_break2.wav"
+}
+
+sound.Add {
+	name = "GekkoStompB",
+	channel = CHAN_STATIC,
+	volume = 1,
+	level = 140,
+	pitch = { 90, 100 },
+	sound = "physics/concrete/concrete_break3.wav"
+}
+
+sound.Add {
 	name = "GekkoSwing",
 	channel = CHAN_STATIC,
 	volume = 1,
@@ -44,22 +62,8 @@ sound.Add {
 	}
 }
 
-// Read the commented out ENT:DoShakeOff() for why this is cut
-//	sound.Add {
-//		name = "GekkoTauntShakeOff",
-//		channel = CHAN_VOICE,
-//		volume = 1,
-//		level = 120,
-//		pitch = { 60, 70 },
-//		sound = {
-//			"^Gekko/Taunt/1.wav",
-//			"^Gekko/Taunt/2.wav",
-//			"^Gekko/Taunt/3.wav"
-//		}
-//	}
-
 sound.Add {
-	name = "GekkoLowing",
+	name = "GekkoCombatLow",
 	channel = CHAN_VOICE,
 	volume = .5,
 	level = 120,
@@ -86,7 +90,7 @@ sound.Add {
 sound.Add {
 	name = "GekkoStepTiptoes",
 	channel = CHAN_STATIC,
-	volume = 1,
+	volume = .3,
 	level = 80,
 	pitch = { 90, 110 },
 	sound = {
@@ -119,14 +123,28 @@ sound.Add {
 }
 
 sound.Add {
-	name = "GekkoLand",
-	channel = CHAN_STATIC,
+	name = "GekkoAngry",
+	channel = CHAN_VOICE,
 	volume = 1,
-	level = 120,
+	level = 140,
 	pitch = { 90, 110 },
 	sound = {
-		"^Gekko/StepA.wav",
-		"^Gekko/StepB.wav"
+		"^Gekko/AngryA.wav",
+		"^Gekko/AngryB.wav"
+	}
+}
+
+sound.Add {
+	name = "GekkoAck",
+	channel = CHAN_VOICE,
+	volume = 1,
+	level = 90,
+	pitch = { 75, 100 },
+	sound = {
+		"^Gekko/Ack/1.wav",
+		"^Gekko/Ack/2.wav",
+		"^Gekko/Ack/3.wav",
+		"^Gekko/Ack/4.wav"
 	}
 }
 
