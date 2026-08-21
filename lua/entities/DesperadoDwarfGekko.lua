@@ -49,7 +49,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	if f <= 12 then self:PromoteSequence "idle"
 	// We only have a running sequence, not a walking one, so play that
 	else self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) ) end
-	self:HandleJumpingAlongPath( pPath, flSpeed, tFilter )
+	self:GrountMovement( pPath, flSpeed, tFilter )
 end
 
 function ENT:OnKilled( ... )

@@ -98,7 +98,7 @@ function ENT:GrantDefaultSkills()
 	MyTable.GrantSkill( self, "UnmannedGearGRAD.Kord.TactileLaser", MyTable )
 end
 
-ENT.flBodyStiffness = 40
+ENT.flBodyStiffness = 60
 ENT.flBodyDamping = -120
 
 function ENT:Initialize()
@@ -117,11 +117,9 @@ function ENT:OnKilled( ... )
 	self:Remove()
 end
 
-ENT.flTopSpeed = 1371
+ENT.flTopSpeed = 1750
 ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 100
-
-ENT.flTurnRate = 128
 
 ENT.flSkateTime = 0
 
@@ -131,8 +129,9 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	local vVelocity = GetVelocity( self )
 	local f = vVelocity:Length()
 	local bWalking = f <= ( self.flWalkSpeed * 1.1 )
-	pLocomotion:SetAcceleration( self.flTopSpeed * ( bWalking && 5 || .5 ) )
-	pLocomotion:SetDeceleration( bWalking && ( self.flTopSpeed * 5 ) || 0 )
+	local flAccelDecel = self.flTopSpeed * ( bWalking && 5 || .5 )
+	pLocomotion:SetAcceleration( flAccelDecel )
+	pLocomotion:SetDeceleration( flAccelDecel )
 	pLocomotion:SetJumpHeight( 0 )
 	if f <= 12 || !self:IsOnGround() then self:PromoteSequence( self.m_sIdleSequence )
 	elseif bWalking then
@@ -149,7 +148,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 		//	elseif flDifference <= 135 || flDifference > 0 then self:PromoteSequence "dash_r"
 		//	else self:PromoteSequence "dash_b" end
 	end
-	self:HandleJumpingAlongPath( pPath, flSpeed, tFilter )
+	self:GrountMovement( pPath, flSpeed, tFilter )
 end
 
 ENT.flNextMachineGunShot = 0
@@ -198,6 +197,8 @@ ENT.vKordVelocity = Vector()
 ENT.flKordStiffness = 24
 ENT.flKordDamping = -4
 
+ENT.flLastCustomBodyYaw = 0
+
 function ENT:Think( ... )
 	local pSkateLoop = self.m_pSkateLoop
 
@@ -214,6 +215,9 @@ function ENT:Think( ... )
 	else
 		pSkateLoop:ChangeVolume( math.Approach( pSkateLoop:GetVolume(), 0, FrameTime() ) )
 	end
+
+	local flOffset = -math.AngleDifference( self:GetAngles()[ 2 ], self.flLastCustomBodyYaw )
+	self.flLastCustomBodyYaw = self:GetAngles()[ 2 ]
 
 	local iBoneID = self:LookupBone( MACHINEGUN_BONE )
 	if iBoneID then
@@ -244,7 +248,7 @@ function ENT:Think( ... )
 		vKordVelocity:Mul( math.exp( self.flKordDamping * FrameTime() ) )
 
 		aKordAngles[ 1 ] = aKordAngles[ 1 ] + vKordVelocity[ 1 ] * FrameTime()
-		aKordAngles[ 2 ] = aKordAngles[ 2 ] + vKordVelocity[ 2 ] * FrameTime()
+		aKordAngles[ 2 ] = aKordAngles[ 2 ] + vKordVelocity[ 2 ] * FrameTime() + flOffset
 
 		if self:HasSkill "UnmannedGearGRAD.Kord.TactileLaser" then
 			local tr = util.TraceLine {
