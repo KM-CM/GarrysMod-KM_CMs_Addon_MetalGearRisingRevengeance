@@ -138,7 +138,7 @@ sound.Add {
 	name = "GekkoAck",
 	channel = CHAN_VOICE,
 	volume = 1,
-	level = 90,
+	level = 100,
 	pitch = { 75, 100 },
 	sound = {
 		"^Gekko/Ack/1.wav",
