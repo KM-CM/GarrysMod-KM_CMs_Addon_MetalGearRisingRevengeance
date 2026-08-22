@@ -200,7 +200,7 @@ end } )
 
 function ENT:GetStompDamageRadius() return self:BoundingRadius() * 2 end
 
-RegisterSchedule( "GekkoStomp", { Execute = function( self, sched, MyTable )
+RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 	local pEnemy, pTrueEnemy = MyTable.Enemy
 
 	if IsValid( pEnemy ) then
@@ -325,25 +325,30 @@ RegisterSchedule( "UnmannedGearGekkoCombat", { Execute = function( self, sched, 
 
 	pEnemyPath:MoveCursorToClosestPosition( self:GetPos() )
 
-	if CurTime() > ( sched.flNextLow || 0 ) && math.random() <= 2 * FrameTime() then
+	if !self:Visible( pEnemy ) then return end
+
+	if CurTime() > ( sched.flNextLow || 0 ) && math.random() <= .5 * FrameTime() then
 		self:EmitSound "GekkoCombatLow"
 		util_ScreenShake( self:GetPos() + self:OBBCenter(), 12, 6, 4, 4096, true )
 		sched.flNextLow = CurTime() + math.Rand( 3, 4 )
 	end
 
 	local flDistance = pEnemyPath:GetLength() - pEnemyPath:GetCursorPosition()
-	if flDistance <= MyTable.flJogSpeed then
-		local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .5
-		if flDistance <= f && math.random() <= .1 * FrameTime() then
+
+	local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .8
+
+	if flDistance <= f then
+		local flChance = .1
+		if flDistance <= MyTable.flJogSpeed then
+		elseif flDistance <= MyTable.flJogSpeed * 2 then
+			flChance = .25
+		else flChance = 1 / 3 end
+
+		if flDistance <= f && math.random() <= flChance * FrameTime() then
 			if math.random( 2 ) == 1 then self:Taunt() return end
 			MyTable.SetSchedule( self, "GekkoCharge", MyTable )
 		end
-		return
-	end
 
-	local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .5
-	if flDistance <= f && math.random() <= ( 512 / flDistance ) * FrameTime() then
-		if math.random( 2 ) == 1 then self:Taunt() return end
-		MyTable.SetSchedule( self, "GekkoCharge", MyTable )
+		return
 	end
 end } )
