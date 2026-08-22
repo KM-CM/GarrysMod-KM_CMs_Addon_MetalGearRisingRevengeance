@@ -132,7 +132,7 @@ function ENT:OnLandOnGround()
 	self.fCallMeInRunBehaviour = function( self, MyTable )
 		if !MyTable.bCharging then
 			MyTable.AnimationSystemHalt( self, MyTable )
-			MyTable.PlaySequenceAndWait( self, "land", 1 )
+			MyTable.PlaySequenceAndWait( self, "land", math.Rand( .75, 1.5 ) )
 		end
 		return true
 	end
@@ -151,6 +151,10 @@ ENT.flLastCustomBodyYaw = 0
 function ENT:Think()
 	self.m_sIdleSequence = self:IsOnGround() && "idle" || "jump"
 
+	return BaseClass.Think( self )
+end
+
+function ENT:HandleTurning( MyTable )
 	local iBoneID = self:LookupBone( HEAD_BONE )
 	if iBoneID then
 		local vPos, aAngles = self:GetBonePosition( iBoneID )
@@ -187,7 +191,7 @@ function ENT:Think()
 		self.flLastCustomBodyYaw = self:GetAngles()[ 2 ]
 	end
 
-	return BaseClass.Think( self )
+	BaseClass.HandleTurning( self, MyTable )
 end
 
 function ENT:OnKilled( ... )
@@ -199,6 +203,7 @@ ENT.flTopSpeed = 512
 ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 96
 ENT.flPowerWalkSpeed = 160
+ENT.flJumpHeight = 2048
 
 function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	local pLocomotion = self.loco
@@ -206,7 +211,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	local f = self.flTopSpeed * ACCELERATION_NORMAL
 	pLocomotion:SetAcceleration( f )
 	pLocomotion:SetDeceleration( f )
-	pLocomotion:SetJumpHeight( 1640 )
+	pLocomotion:SetJumpHeight( self.flJumpHeight )
 	local f = GetVelocity( self ):Length()
 	if f <= 12 || !self:IsOnGround() then self:PromoteSequence( self.m_sIdleSequence )
 	elseif f <= ( self.flWalkSpeed * 1.1 ) then

@@ -149,5 +149,6 @@ function ENT:Initialize()
 	self:SetMaxHealth( 256 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
 	self:PhysicsInitShadow( SOLID_OBB )
+	self:SetBloodColor( BLOOD_COLOR_MECH )
 	BaseClass.Initialize( self )
 end
