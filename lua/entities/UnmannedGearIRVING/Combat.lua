@@ -5,8 +5,9 @@ function ENT:OhBoyItsTimeToJump( pEnemy, MyTable )
 		MyTable.HandleSentences( self, MyTable )
 	end
 
-	MyTable.SetSchedule( self, "GekkoInterceptJump", MyTable )
-	MyTable.InterceptJump( self, pEnemy, nil, MyTable.flJumpHeight )
+	local vIntercept = MyTable.InterceptJump( self, pEnemy, nil, MyTable.flJumpHeight )
+	vIntercept:Sub( self:GetPos() )
+	MyTable.SetSchedule( self, "GekkoInterceptJump", MyTable ).aLook = vIntercept:Angle()
 end
 
 local util_ScreenShake = util.ScreenShake
@@ -56,10 +57,10 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 		pSchedule.flDuration = flDuration
 		pSchedule.flEndTime = CurTime() + flDuration
 
-		if math.random( 4 ) == 1 && MyTable.IsInterceptJumpLegalShort( self, pEnemy, MyTable.flJumpHeight ) then
+		if IsValid( pEnemy ) && math.random( 5 ) == 1 && MyTable.IsInterceptJumpLegalShort( self, pEnemy, MyTable.flJumpHeight ) then
 			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable )
 			return
-		elseif math.random( 4 ) == 1 then
+		elseif math.random( 5 ) == 1 then
 			pSchedule.flJumpChance = 6
 		else pSchedule.flJumpChance = 1 end
 	end
@@ -192,7 +193,7 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 	MyTable.PlaySequenceAndWait( self, math.random( 2 ) == 1 && "att1_1" || "att2_1", math.Rand( .5, 1.5 ) )
 
 	// Nuh uh!
-	if IsValid( pEnemy ) && math.random( 4 ) == 1 && MyTable.IsInterceptJumpLegal( self, pEnemy ) then
+	if IsValid( pEnemy ) && math.random( 3 ) == 1 && MyTable.IsInterceptJumpLegal( self, pEnemy ) then
 		MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable )
 		return
 	end
@@ -335,13 +336,13 @@ RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 	return true
 end } )
 
-RegisterSchedule( "GekkoInterceptJump", { Execute = function( self, sched, MyTable )
+RegisterSchedule( "GekkoInterceptJump", { Execute = function( self, pSchedule, MyTable )
 	if self:IsOnGround() then return true end
 
 	local pEnemy = MyTable.Enemy
 	if IsValid( pEnemy ) then
-		MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
-		MyTable.vaAimTargetPose = MyTable.vaAimTargetBody
+		MyTable.vaAimTargetBody = pSchedule.aLook
+		MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
 	end
 end } )
 
@@ -412,23 +413,31 @@ RegisterSchedule( "UnmannedGearGekkoCombat", { Execute = function( self, sched, 
 	if !self:Visible( pEnemy ) then return end
 
 	if math.random() <= 1 / 3 * FrameTime() && MyTable.IsInterceptJumpLegal( self, pEnemy ) then
-		MyTable.AnimationSystemHalt( self, MyTable, nil, function()
-			MyTable.Look( self, MyTable )
-			MyTable.HandleTurning( self, MyTable )
-		end )
+		if math.random( 6 ) == 1 then
+			MyTable.AnimationSystemHalt( self, MyTable )
 
-		local iRand = math.random( 1, 3 )
-		if iRand == 1 then
+			MyTable.PlaySequenceAndWait( self, "jump_start", math.Rand( 1, 2 ), nil, function()
+				MyTable.Look( self, MyTable )
+				MyTable.HandleTurning( self, MyTable )
+			end )
 
-		elseif iRand == 2 then
-			MyTable.PlaySequenceAndWait( self, "jump_start", math.Rand( 1, 2 ) )
-
-		elseif iRand == 3 then
-			MyTable.PlaySequenceAndWait( self, "jump_start", math.Rand( 1, 2 ) )
-
-			MyTable.PlaySequenceAndWait( self, "jump_start", -math.Rand( 1, 2 ) )
+			MyTable.PlaySequenceAndWait( self, "jump_start", -math.Rand( 1, 2 ), nil, function()
+				MyTable.Look( self, MyTable )
+				MyTable.HandleTurning( self, MyTable )
+			end )
 
 			return
+		end
+
+		local iRand = math.random( 1, 2 )
+		if iRand == 1 then
+		elseif iRand == 2 then
+			MyTable.AnimationSystemHalt( self, MyTable )
+
+			MyTable.PlaySequenceAndWait( self, "jump_start", math.Rand( 1, 2 ), nil, function()
+				MyTable.Look( self, MyTable )
+				MyTable.HandleTurning( self, MyTable )
+			end )
 		end
 
 		if IsValid( pEnemy ) then

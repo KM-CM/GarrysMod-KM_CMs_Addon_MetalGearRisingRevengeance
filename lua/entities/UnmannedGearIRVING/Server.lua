@@ -122,6 +122,11 @@ function ENT:OnLandOnGround()
 	util_ScreenShake( vPos, 8, 40, 1.5, 4096, true )
 	self.GAME_OnHurtSomething = nil
 
+	local pData = EffectData()
+	pData:SetEntity( self )
+	pData:SetOrigin( self:GetPos() )
+	util.Effect( "MediumGearLand", pData )
+
 	if math.random( 2 ) == 1 then
 		for i = 1, 24 do self:EmitSound "GekkoStompA" end
 	else
@@ -154,6 +159,7 @@ function ENT:Think()
 	return BaseClass.Think( self )
 end
 
+// TODO: Properly measure calltime rather than relying on bullshit ass FrameTime()
 function ENT:HandleTurning( MyTable )
 	local iBoneID = self:LookupBone( HEAD_BONE )
 	if iBoneID then

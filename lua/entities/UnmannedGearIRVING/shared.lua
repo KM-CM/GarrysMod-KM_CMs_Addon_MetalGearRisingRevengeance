@@ -19,20 +19,20 @@ sound.Add {
 	}
 }
 
+// Keep these soundlevels semi low as there's no far sound variation
 sound.Add {
 	name = "GekkoStompA",
 	channel = CHAN_STATIC,
 	volume = 1,
-	level = 140,
+	level = 130,
 	pitch = 100,
 	sound = "physics/concrete/concrete_break2.wav"
 }
-
 sound.Add {
 	name = "GekkoStompB",
 	channel = CHAN_STATIC,
 	volume = 1,
-	level = 140,
+	level = 130,
 	pitch = { 90, 100 },
 	sound = "physics/concrete/concrete_break3.wav"
 }
