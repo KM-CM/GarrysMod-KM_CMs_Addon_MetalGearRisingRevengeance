@@ -1,4 +1,6 @@
 // Purpose: cow
+// See TM 9-2350-274-10 Operator's Manual for Unmanned Infantry Fighting Vehicle, IRVING for more information
+// (That thing is my headcanon and doesn't exist lmfao)
 
 AddCSLuaFile()
 DEFINE_BASECLASS "BaseActor"
@@ -90,12 +92,13 @@ sound.Add {
 sound.Add {
 	name = "GekkoStepTiptoes",
 	channel = CHAN_STATIC,
-	volume = .3,
+	volume = 1,
 	level = 80,
 	pitch = { 90, 110 },
 	sound = {
-		"^Gekko/StepA.wav",
-		"^Gekko/StepB.wav"
+		"Gekko/HooveA.wav",
+		"Gekko/HooveB.wav",
+		"Gekko/HooveC.wav"
 	}
 }
 
@@ -103,7 +106,7 @@ sound.Add {
 	name = "GekkoStepJog",
 	channel = CHAN_STATIC,
 	volume = 1,
-	level = 90,
+	level = 100,
 	pitch = { 90, 110 },
 	sound = {
 		"^Gekko/StepA.wav",

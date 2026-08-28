@@ -22,28 +22,36 @@ local util_ScreenShake = util.ScreenShake
 NOT_A_VOICELINE[ "Gekko/StepA.wav" ] = true
 NOT_A_VOICELINE[ "Gekko/StepB.wav" ] = true
 
-local function fChargeOStep( self ) util_ScreenShake( self:GetPos() + self:OBBCenter(), 6, 1, 1, 2048, true ) end
+local function fChargeOStep( self, _, flWeight )
+	if flWeight <= .75 then return end
+	self:EmitSound "GekkoStepCharge"
+	util_ScreenShake( self:GetPos() + self:OBBCenter(), 6, 1, 1, 2048, true )
+end
 
 ENT.tSequenceEvents = {
 	walk = {
-		[ .411 ] = function( self )
+		[ .411 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
 			self:EmitSound "GekkoStepTiptoes"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
 		end,
 
-		[ .911 ] = function( self )
+		[ .911 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
 			self:EmitSound "GekkoStepTiptoes"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
 		end
 	},
 
 	run = {
-		[ .2 ] = function( self )
+		[ .2 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
 			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
 		end,
 
-		[ .54 ] = function( self )
+		[ .54 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
 			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
 		end
@@ -51,14 +59,14 @@ ENT.tSequenceEvents = {
 
 	stomp1 = {
 		[ .4 ] = function( self )
-			self:EmitSound "GekkoStepTiptoes"
+			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
 		end
 	},
 
 	stomp2 = {
 		[ .8 ] = function( self )
-			self:EmitSound "GekkoStepTiptoes"
+			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
 		end
 	},
@@ -76,18 +84,18 @@ ENT.tSequenceEvents = {
 	},
 
 	charge = {
-		[ .2 ] = function( self ) self:EmitSound "GekkoStepCharge" fChargeOStep( self ) end,
-		[ .54 ] = function( self ) self:EmitSound "GekkoStepCharge" fChargeOStep( self ) end
+		[ .2 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end,
+		[ .54 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end
 	},
 
 	charge_start = {
-		[ .2 ] = function( self ) self:EmitSound "GekkoStepCharge" fChargeOStep( self ) end,
-		[ .54 ] = function( self ) self:EmitSound "GekkoStepCharge" fChargeOStep( self ) end
+		[ .2 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end,
+		[ .54 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end
 	},
 
 	charge_end = {
-		[ .2 ] = function( self ) self:EmitSound "GekkoStepCharge" fChargeOStep( self ) end,
-		[ .54 ] = function( self ) self:EmitSound "GekkoStepCharge" fChargeOStep( self ) end
+		[ .2 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end,
+		[ .54 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end
 	}
 }
 
@@ -114,8 +122,8 @@ function ENT:OnLandOnGround()
 		v:Mul( math.Rand( 760 * 85, 780 * 85 ) )
 		dDamage:SetDamageForce( v )
 		dDamage:SetDamage( 8192 )
-		// I would use DMG_CRUSH, but some entities (let's not point fingers... anyway it was npc_antlionguard), for SOME REASON, completely ignore it!
-		dDamage:SetDamageType( DMG_CLUB )
+		// I would use DMG_CRUSH, but some entities (let's not point fingers at npc_antlionguard here), for SOME REASON, completely ignore it
+		dDamage:SetDamageType( DMG_RAYLEIGH )
 	end
 
 	util.BlastDamage( self, self, vPos, self:BoundingRadius() * 2, 1 )
@@ -161,23 +169,25 @@ end
 
 // TODO: Properly measure calltime rather than relying on bullshit ass FrameTime()
 function ENT:HandleTurning( MyTable )
+	local flFrameTime = BaseClass.HandleTurning( self, MyTable )
+
 	local iBoneID = self:LookupBone( HEAD_BONE )
 	if iBoneID then
 		local vPos, aAngles = self:GetBonePosition( iBoneID )
 
-		local aDesAim
+		local aManip = self:GetManipulateBoneAngles( iBoneID )
 
-		local vShoot = vPos + aAngles:Up() * 80 - aAngles:Right() * 17
+		local aDesAim
 
 		local vaHeadTarget = self.vaAimTargetPose
 		if isvector( vaHeadTarget ) then
-			aDesAim = ( vaHeadTarget - vShoot ):Angle()
+			aDesAim = ( vaHeadTarget - ( vPos + aAngles:Up() * 64 ) ):Angle()
 		elseif isangle( vaHeadTarget ) then
 			aDesAim = vaHeadTarget
 		else aDesAim = self:GetAngles() end
 
 		local aCurrentAngles = self:GetAngles()
-		aDesAim[ 1 ] = math.NormalizeAngle( aCurrentAngles[ 1 ] + math.Clamp( math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ), -90, 90 ) )
+		aDesAim[ 1 ] = aCurrentAngles[ 1 ] + math.Clamp( math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ), -90, 90 )
 
 		local aHeadAngles = self.aHeadAngles
 		aCurrentAngles:Add( aHeadAngles )
@@ -186,18 +196,16 @@ function ENT:HandleTurning( MyTable )
 		vHeadVelocity:Add( Vector(
 			math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ),
 			math.AngleDifference( aDesAim[ 2 ], aCurrentAngles[ 2 ] )
-		) * self.flHeadStiffness * FrameTime() )
-		vHeadVelocity:Mul( math.exp( self.flHeadDamping * FrameTime() ) )
+		) * self.flHeadStiffness * flFrameTime )
+		vHeadVelocity:Mul( math.exp( self.flHeadDamping * flFrameTime ) )
 
-		aHeadAngles[ 1 ] = aHeadAngles[ 1 ] + vHeadVelocity[ 1 ] * FrameTime()
-		aHeadAngles[ 2 ] = aHeadAngles[ 2 ] + vHeadVelocity[ 2 ] * FrameTime() - math.AngleDifference( self:GetAngles()[ 2 ], self.flLastCustomBodyYaw )
+		aHeadAngles[ 1 ] = aHeadAngles[ 1 ] + vHeadVelocity[ 1 ] * flFrameTime
+		aHeadAngles[ 2 ] = aHeadAngles[ 2 ] + vHeadVelocity[ 2 ] * flFrameTime - math.AngleDifference( self:GetAngles()[ 2 ], self.flLastCustomBodyYaw )
 
-		self:ManipulateBoneAngles( iBoneID, Angle( aHeadAngles[ 2 ], 0, aHeadAngles[ 1 ] ) )
+		self:ManipulateBoneAngles( iBoneID, Angle( aHeadAngles[ 2 ], 0, aHeadAngles[ 1 ] - 22.5 ) )
 
 		self.flLastCustomBodyYaw = self:GetAngles()[ 2 ]
 	end
-
-	BaseClass.HandleTurning( self, MyTable )
 end
 
 function ENT:OnKilled( ... )
@@ -205,10 +213,12 @@ function ENT:OnKilled( ... )
 	self:Remove()
 end
 
-ENT.flTopSpeed = 512
+ENT.flChargeSpeed = 820
+ENT.flTopSpeed = 428
 ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 96
 ENT.flPowerWalkSpeed = 160
+
 ENT.flJumpHeight = 2048
 
 function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
@@ -231,24 +241,6 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 end
 
 function ENT:Stand() self.loco:SetJumpHeight( 1640 ) BaseClass.Stand( self ) end
-
-// MOO!
-function ENT:Taunt()
-// Dumbass function name
-//	function ENT:DoRoar()
-	self.sCallMeInRunBehaviour = "Roar"
-	self.fCallMeInRunBehaviour = function( self, MyTable )
-		self.bTaunting = true
-		timer.Simple( .8, function()
-			if !IsValid( self ) then return end
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 8, 40, 2, 4096, true )
-			self:EmitSound "GekkoTaunt"
-		end )
-		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndWait( self, "taunt", 1 )
-		return true
-	end
-end
 
 // After playing some MGR, this is the animation that plays (I think)
 // where the Gekko stomps, gets its foot stuck in the ground,
