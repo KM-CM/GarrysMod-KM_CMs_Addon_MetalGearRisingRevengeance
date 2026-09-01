@@ -53,7 +53,15 @@ RegisterSchedule( "GekkoInspectFirearm", { Execute = function( self, pSchedule, 
 		MyTable.HandleSentences( self, MyTable )
 
 		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndWait( self, "stun_start", math.Rand( .5, 2 / 3 ) )
+		MyTable.PlaySequenceAndWait( self, "stun_start", math.Rand( .5, 2 / 3 ), function()
+			// For some reason, causes the Gekko to into the exact opposite direction
+			//	if IsValid( pWeapon ) then
+			//		MyTable.vaAimTargetPose = pWeapon:GetPos() + pWeapon:OBBCenter()
+			//	end
+
+			MyTable.Look( self, MyTable )
+			MyTable.HandleTurning( self, MyTable )
+		end )
 	end
 
 	if !IsValid( pWeapon ) then return true end
@@ -109,7 +117,7 @@ RegisterSchedule( "GekkoStompFirearm", { Execute = function( self, pSchedule, My
 	if !pSchedule.bLowed then
 		pSchedule.bLowed = true
 
-		MyTable.EmitSentence( self, { sSound = "GekkoAngry" }, MyTable )
+		MyTable.EmitSentence( self, { sSound = "GekkoTaunt" }, MyTable )
 		MyTable.HandleSentences( self, MyTable )
 	end
 

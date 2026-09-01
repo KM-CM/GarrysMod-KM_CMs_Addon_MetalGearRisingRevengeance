@@ -1,9 +1,15 @@
-function ENT:OhBoyItsTimeToJump( pEnemy, MyTable )
+function ENT:CustomMoo( MyTable )
 	if math.random( 2 ) == 1 then
 		MyTable.EmitSentence( self, { sSound = "GekkoTaunt" }, MyTable )
 	
 		MyTable.HandleSentences( self, MyTable )
+
+		return true
 	end
+end
+
+function ENT:OhBoyItsTimeToJump( pEnemy, MyTable, bCustomMoo )
+	if !bCustomMoo then MyTable.CustomMoo( self, MyTable ) end
 
 	local vIntercept = MyTable.InterceptJump( self, pEnemy, nil, MyTable.flJumpHeight )
 	vIntercept:Sub( self:GetPos() )
@@ -34,17 +40,7 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 
 		timer.Simple( .3, function()
 			if !IsValid( self ) then return end
-			self:EmitSound "GekkoCharge"
-		end )
-
-		timer.Simple( .6, function()
-			if !IsValid( self ) then return end
-			self:EmitSound "GekkoCharge"
-		end )
-
-		timer.Simple( 1, function()
-			if !IsValid( self ) then return end
-			self:EmitSound "GekkoCharge"
+			self:EmitSound "GekkoTaunt"
 		end )
 
 		MyTable.AnimationSystemHalt( self, MyTable )
@@ -191,7 +187,15 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 
 	MyTable.AnimationSystemHalt( self, MyTable )
 
-	MyTable.PlaySequenceAndWait( self, math.random( 2 ) == 1 && "att1_1" || "att2_1", math.Rand( .5, 1.5 ), nil, function()
+	local sWarmupSequence = math.random( 2 ) == 1 && "att1_1" || "att2_1"
+	local flWarmupMultiplier = math.Rand( .5, 1.5 )
+
+	local sSequence = tAttackSequences[ math.random( 1, 4 ) ]
+	local flMultiplier = math.Rand( 2 / 3, 1 + 1 / 3 )
+
+	// TODO: Melee data here!
+
+	MyTable.PlaySequenceAndWait( self, sWarmupSequence, flWarmupMultiplier, nil, function()
 		if IsValid( pEnemy ) then
 			MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
 			MyTable.vaAimTargetPose = MyTable.vaAimTargetBody
@@ -206,8 +210,6 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 		MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable )
 		return
 	end
-
-	local flMultiplier = math.Rand( 2 / 3, 1 + 1 / 3 )
 
 	self:EmitSound "GekkoSwing"
 
@@ -259,7 +261,7 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 
 	MyTable.AnimationSystemHalt( self, MyTable )
 
-	MyTable.PlaySequenceAndWait( self, tAttackSequences[ math.random( 1, 4 ) ], flMultiplier, nil, function()
+	MyTable.PlaySequenceAndWait( self, sSequence, flMultiplier, nil, function()
 		if IsValid( pEnemy ) then
 			MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
 			MyTable.vaAimTargetPose = MyTable.vaAimTargetBody
@@ -293,19 +295,29 @@ RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 		end
 	end
 
+	local flWarmupMultiplier = math.Rand( .75, 1.25 )
+	local flMultiplier = math.Rand( .5, 2 )
+	local flLeaveMultiplier = math.Rand( .75, 1.25 )
+
+	ClearMeleeData( self, MyTable )
+
+	MyTable.MELEE_flStart = CurTime()
+	MyTable.MELEE_flHit = CurTime() + self:SequenceDuration( self:LookupSequence "stomp1" ) / flWarmupMultiplier + .1 / flMultiplier
+	MyTable.MELEE_flEnd = CurTime() + self:SequenceDuration( self:LookupSequence "stomp1" ) / flWarmupMultiplier + self:SequenceDuration( self:LookupSequence "att3" ) / flMultiplier + self:SequenceDuration( self:LookupSequence "att3_unstuck" ) / flLeaveMultiplier
+	MyTable.MELEE_flRadius = MyTable.GetStompDamageRadius( self )
+	MyTable.MELEE_flDamage = 3072
+
 	MyTable.AnimationSystemHalt( self, MyTable )
 
-	MyTable.PlaySequenceAndWait( self, "stomp1", math.Rand( .75, 1.25 ), nil, function()
+	MyTable.PlaySequenceAndWait( self, "stomp1", flWarmupMultiplier, nil, function()
 		if IsValid( pEnemy ) then
 			MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
 			MyTable.vaAimTargetPose = MyTable.vaAimTargetBody
+
+			MyTable.Look( self, MyTable )
+			MyTable.HandleTurning( self, MyTable )
 		end
-
-		MyTable.Look( self, MyTable )
-		MyTable.HandleTurning( self, MyTable )
 	end )
-
-	local flMultiplier = math.Rand( .5, 2 )
 
 	timer.Simple( .1 / flMultiplier, function()
 		if !IsValid( self ) then return end
@@ -351,13 +363,13 @@ RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 			//	MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
 			//	MyTable.vaAimTargetPose = MyTable.vaAimTargetBody
 			MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
-		end
 
-		MyTable.Look( self, MyTable )
-		MyTable.HandleTurning( self, MyTable )
+			MyTable.Look( self, MyTable )
+			MyTable.HandleTurning( self, MyTable )
+		end
 	end )
 
-	MyTable.PlaySequenceAndWait( self, "att3_unstuck", math.Rand( .75, 1.25 ), nil, function()
+	MyTable.PlaySequenceAndWait( self, "att3_unstuck", flLeaveMultiplier, nil, function()
 		if IsValid( pEnemy ) then
 			//	MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
 			//	MyTable.vaAimTargetPose = MyTable.vaAimTargetBody
@@ -420,6 +432,13 @@ RegisterSchedule( "UnmannedGearGekkoCombat", { Execute = function( self, sched, 
 
 	MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
 
+	local EDefense, flOptional = MyTable.HandleDefense( self, MyTable )
+	if EDefense > DEF_NO_ACTION_NEEDED then
+		if EDefense == DEF_DONT_ADVANCE_TO_RANGE then
+			// TODO: Handle this, duh xD
+		else return end
+	end
+
 	if !self:IsOnGround() then return end
 
 	// Never charge or taunt if we can just smash 'em
@@ -479,9 +498,11 @@ RegisterSchedule( "UnmannedGearGekkoCombat", { Execute = function( self, sched, 
 			return
 		end
 
-		local iRand = math.random( 1, 2 )
-		if iRand == 1 then
-		elseif iRand == 2 then
+		local bCustomMoo
+
+		if math.random( 1, 2 ) == 1 then
+			bCustomMoo = MyTable.CustomMoo( self, MyTable )
+
 			MyTable.AnimationSystemHalt( self, MyTable )
 
 			MyTable.PlaySequenceAndWait( self, "jump_start", math.Rand( 1, 2 ), nil, function()
@@ -495,13 +516,13 @@ RegisterSchedule( "UnmannedGearGekkoCombat", { Execute = function( self, sched, 
 		end
 
 		if IsValid( pEnemy ) then
-			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable )
+			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, bCustomMoo )
 			return
 		else return true end
 	end
 
-	if CurTime() > ( sched.flNextLow || 0 ) && math.random() <= .5 * FrameTime() then
-		self:EmitSound "GekkoCombatLow"
+	if CurTime() > ( sched.flNextLow || 0 ) && math.random() <= ( 1 / 3 ) * FrameTime() then
+		self:EmitSound "GekkoTaunt"
 		util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 6, 4, 4096, true )
 		sched.flNextLow = CurTime() + math.Rand( 3, 4 )
 	end

@@ -96,6 +96,48 @@ ENT.tSequenceEvents = {
 	charge_end = {
 		[ .2 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end,
 		[ .54 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end
+	},
+
+	dodge_l = {
+		[ .2 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoDodgeJump"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 6, 1, 1, 1536, true )
+		end,
+
+		[ .56 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoDodgeLand"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 1536, true )
+		end
+	},
+
+	dodge_r = {
+		[ .2 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoDodgeJump"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 6, 1, 1, 1536, true )
+		end,
+
+		[ .56 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoDodgeLand"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 1536, true )
+		end
+	},
+
+	dodge_b = {
+		[ .2 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoDodgeJump"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 6, 1, 1, 1536, true )
+		end,
+
+		[ .56 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoDodgeLand"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 1536, true )
+		end
 	}
 }
 
@@ -133,13 +175,9 @@ function ENT:OnLandOnGround()
 	local pData = EffectData()
 	pData:SetEntity( self )
 	pData:SetOrigin( self:GetPos() )
-	util.Effect( "MediumGearLand", pData )
+	util.Effect( "GekkoLand", pData )
 
-	if math.random( 2 ) == 1 then
-		for i = 1, 24 do self:EmitSound "GekkoStompA" end
-	else
-		for i = 1, 24 do self:EmitSound "GekkoStompA" end
-	end
+	self:EmitSound "GekkoLand"
 
 	self.sCallMeInRunBehaviour = "Land"
 	self.fCallMeInRunBehaviour = function( self, MyTable )
@@ -151,15 +189,15 @@ function ENT:OnLandOnGround()
 	end
 end
 
+function ENT:PostJumpInternal() self:EmitSound "GekkoJump" end
+
 local HEAD_BONE = "bone003"
 
 ENT.aHeadAngles = Angle()
 ENT.vHeadVelocity = Vector()
 
-ENT.flHeadStiffness = 32
-ENT.flHeadDamping = -8
-
-ENT.flLastCustomBodyYaw = 0
+ENT.flHeadStiffness = 8
+ENT.flHeadDamping = -4
 
 function ENT:Think()
 	self.m_sIdleSequence = self:IsOnGround() && "idle" || "jump"
@@ -200,11 +238,9 @@ function ENT:HandleTurning( MyTable )
 		vHeadVelocity:Mul( math.exp( self.flHeadDamping * flFrameTime ) )
 
 		aHeadAngles[ 1 ] = aHeadAngles[ 1 ] + vHeadVelocity[ 1 ] * flFrameTime
-		aHeadAngles[ 2 ] = aHeadAngles[ 2 ] + vHeadVelocity[ 2 ] * flFrameTime - math.AngleDifference( self:GetAngles()[ 2 ], self.flLastCustomBodyYaw )
+		aHeadAngles[ 2 ] = aHeadAngles[ 2 ] + vHeadVelocity[ 2 ] * flFrameTime
 
 		self:ManipulateBoneAngles( iBoneID, Angle( aHeadAngles[ 2 ], 0, aHeadAngles[ 1 ] - 22.5 ) )
-
-		self.flLastCustomBodyYaw = self:GetAngles()[ 2 ]
 	end
 end
 
@@ -322,6 +358,92 @@ function ENT:OnTakeDamage( dDamage )
 	end
 	return BaseClass.OnTakeDamage( self, dDamage )
 end
+
+ENT.Defense = {
+	DodgeLeft = {
+		HasDodgePart = function() return true end,
+
+		MinimumSpeed = function() return .75 end,
+		MaximumSpeed = function() return 1 end,
+
+		Duration = function( self ) return self:SequenceDuration( self:LookupSequence "dodge_l" ) end,
+
+		Point = function( self, flCycle )
+			local _, v = self:GetSequenceMovement( self:LookupSequence "dodge_l", 0, flCycle )
+			v:Mul( self:GetModelScale() )
+			v:Rotate( self:GetAngles() )
+			v:Add( self:GetPos() )
+			return v
+		end,
+
+		Perform = function( self, MyTable, flMultiplier )
+			MyTable.AnimationSystemHalt( self, MyTable )
+			MyTable.PlaySequenceAndMove( self, "dodge_l", flMultiplier, nil, function()
+				local pEnemy = MyTable.Enemy
+				if IsValid( pEnemy ) then MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter() end
+
+				MyTable.Look( self, MyTable )
+				MyTable.HandleTurning( self, MyTable )
+			end )
+		end
+	},
+
+	DodgeRight = {
+		HasDodgePart = function() return true end,
+
+		MinimumSpeed = function() return .75 end,
+		MaximumSpeed = function() return 1 end,
+
+		Duration = function( self ) return self:SequenceDuration( self:LookupSequence "dodge_r" ) end,
+
+		Point = function( self, flCycle )
+			local _, v = self:GetSequenceMovement( self:LookupSequence "dodge_r", 0, flCycle )
+			v:Mul( self:GetModelScale() )
+			v:Rotate( self:GetAngles() )
+			v:Add( self:GetPos() )
+			return v
+		end,
+
+		Perform = function( self, MyTable, flMultiplier )
+			MyTable.AnimationSystemHalt( self, MyTable )
+			MyTable.PlaySequenceAndMove( self, "dodge_r", flMultiplier, nil, function()
+				local pEnemy = MyTable.Enemy
+				if IsValid( pEnemy ) then MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter() end
+
+				MyTable.Look( self, MyTable )
+				MyTable.HandleTurning( self, MyTable )
+			end )
+		end
+	},
+
+	DodgeBack = {
+		HasDodgePart = function() return true end,
+
+		MinimumSpeed = function() return .75 end,
+		MaximumSpeed = function() return 1 end,
+
+		Duration = function( self ) return self:SequenceDuration( self:LookupSequence "dodge_b" ) end,
+
+		Point = function( self, flCycle )
+			local _, v = self:GetSequenceMovement( self:LookupSequence "dodge_b", 0, flCycle )
+			v:Mul( self:GetModelScale() )
+			v:Rotate( self:GetAngles() )
+			v:Add( self:GetPos() )
+			return v
+		end,
+
+		Perform = function( self, MyTable, flMultiplier )
+			MyTable.AnimationSystemHalt( self, MyTable )
+			MyTable.PlaySequenceAndMove( self, "dodge_b", flMultiplier, nil, function()
+				local pEnemy = MyTable.Enemy
+				if IsValid( pEnemy ) then MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter() end
+
+				MyTable.Look( self, MyTable )
+				MyTable.HandleTurning( self, MyTable )
+			end )
+		end
+	}
+}
 
 include "Combat.lua"
 include "InspectFirearm.lua"

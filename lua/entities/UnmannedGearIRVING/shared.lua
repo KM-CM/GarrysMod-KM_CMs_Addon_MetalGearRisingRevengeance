@@ -26,7 +26,7 @@ sound.Add {
 	name = "GekkoStompA",
 	channel = CHAN_STATIC,
 	volume = 1,
-	level = 130,
+	level = 120,
 	pitch = 100,
 	sound = "physics/concrete/concrete_break2.wav"
 }
@@ -34,9 +34,27 @@ sound.Add {
 	name = "GekkoStompB",
 	channel = CHAN_STATIC,
 	volume = 1,
-	level = 130,
+	level = 120,
 	pitch = { 90, 100 },
 	sound = "physics/concrete/concrete_break3.wav"
+}
+
+sound.Add {
+	name = "GekkoJump",
+	channel = CHAN_STATIC,
+	volume = 1,
+	level = 130,
+	pitch = { 90, 110 },
+	sound = "^Gekko/Jump.wav"
+}
+
+sound.Add {
+	name = "GekkoLand",
+	channel = CHAN_STATIC,
+	volume = 1,
+	level = 140,
+	pitch = { 90, 110 },
+	sound = "^Gekko/Jump.wav"
 }
 
 sound.Add {
@@ -53,39 +71,30 @@ sound.Add {
 
 sound.Add {
 	name = "GekkoTaunt",
-	channel = CHAN_VOICE,
+	channel = CHAN_STATIC,
 	volume = 1,
 	level = 120,
 	pitch = { 90, 110 },
 	sound = {
 		"^Gekko/Taunt/1.wav",
 		"^Gekko/Taunt/2.wav",
-		"^Gekko/Taunt/3.wav"
+		"^Gekko/Taunt/3.wav",
+		"^Gekko/Taunt/4.wav",
+		"^Gekko/Taunt/5.wav",
+		"^Gekko/Taunt/6.wav",
+		"^Gekko/Taunt/7.wav"
 	}
 }
 
 sound.Add {
-	name = "GekkoCombatLow",
-	channel = CHAN_VOICE,
-	volume = .5,
-	level = 120,
-	pitch = { 60, 110 },
-	sound = {
-		"^Gekko/Taunt/1.wav",
-		"^Gekko/Taunt/2.wav",
-		"^Gekko/Taunt/3.wav"
-	}
-}
-
-sound.Add {
-	name = "GekkoCharge",
-	channel = CHAN_AUTO,
+	name = "GekkoDistressed",
+	channel = CHAN_STATIC,
 	volume = 1,
 	level = 120,
 	pitch = { 90, 100 },
 	sound = {
-		"^Gekko/ChargeA.wav",
-		"^Gekko/ChargeB.wav"
+		"^Gekko/DistressA.wav",
+		"^Gekko/DistressB.wav"
 	}
 }
 
@@ -113,6 +122,7 @@ sound.Add {
 		"^Gekko/StepB.wav"
 	}
 }
+
 sound.Add {
 	name = "GekkoStepCharge",
 	channel = CHAN_STATIC,
@@ -126,14 +136,25 @@ sound.Add {
 }
 
 sound.Add {
-	name = "GekkoAngry",
-	channel = CHAN_VOICE,
-	volume = 1,
-	level = 140,
+	name = "GekkoDodgeJump",
+	channel = CHAN_STATIC,
+	level = 110,
 	pitch = { 90, 110 },
 	sound = {
-		"^Gekko/AngryA.wav",
-		"^Gekko/AngryB.wav"
+		"^Gekko/StepA.wav",
+		"^Gekko/StepB.wav"
+	}
+}
+
+sound.Add {
+	name = "GekkoDodgeLand",
+	channel = CHAN_STATIC,
+	level = 90,
+	pitch = { 90, 110 },
+	sound = {
+		"Gekko/HooveA.wav",
+		"Gekko/HooveB.wav",
+		"Gekko/HooveC.wav"
 	}
 }
 
@@ -149,6 +170,13 @@ sound.Add {
 		"^Gekko/Ack/3.wav",
 		"^Gekko/Ack/4.wav"
 	}
+}
+
+sound.Add {
+	name = "GekkoChirpLoop",
+	channel = CHAN_STATIC,
+	level = 100,
+	sound = "^Gekko/ChirpLoop.wav"
 }
 
 if SERVER then include "Server.lua" end
