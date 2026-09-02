@@ -175,7 +175,7 @@ sound.Add {
 sound.Add {
 	name = "GekkoChirpLoop",
 	channel = CHAN_STATIC,
-	level = 100,
+	level = 120,
 	sound = "^Gekko/ChirpLoop.wav"
 }
 

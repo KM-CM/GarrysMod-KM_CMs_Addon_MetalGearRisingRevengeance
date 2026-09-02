@@ -199,13 +199,42 @@ ENT.vHeadVelocity = Vector()
 ENT.flHeadStiffness = 8
 ENT.flHeadDamping = -4
 
+ENT.m_flTargetChirpVolume = 0
+
+function ENT:ChirpSoundContext()
+	self.SOUND_CONTEXT_sContext = "Cicada"
+	self.SOUND_CONTEXT_bUnableToPinpointLocation = true
+end
+
 function ENT:Think()
 	self.m_sIdleSequence = self:IsOnGround() && "idle" || "jump"
+
+	local pChirpLoop = self.m_pChirpLoop
+	if !pChirpLoop then
+		pChirpLoop = CreateSound( self, "GekkoChirpLoop" )
+		self:ChirpSoundContext()
+		pChirpLoop:PlayEx( 0, 0 )
+		self.m_pChirpLoop = pChirpLoop
+	end
+
+	if pChirpLoop then
+		self:ChirpSoundContext()
+		pChirpLoop:ChangeVolume( self.m_flTargetChirpVolume * math.Rand( .5, 1 ) )
+
+		self:ChirpSoundContext()
+		pChirpLoop:ChangePitch( math.Rand( 95, 105 ) )
+	end
 
 	return BaseClass.Think( self )
 end
 
-// TODO: Properly measure calltime rather than relying on bullshit ass FrameTime()
+function ENT:OnRemove()
+	local pChirpLoop = self.m_pChirpLoop
+	if pChirpLoop then pChirpLoop:Stop() end
+
+	BaseClass.OnRemove( self )
+end
+
 function ENT:HandleTurning( MyTable )
 	local flFrameTime = BaseClass.HandleTurning( self, MyTable )
 
@@ -307,12 +336,15 @@ function ENT:Stand() self.loco:SetJumpHeight( 1640 ) BaseClass.Stand( self ) end
 // which avoids hardware damage and bad posture. Unlike AI Errors, this is an issue with our
 // biological part, therefore we can still see and hear while in it.
 ENT.flWrongLegPing = 0
-RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self, sched, MyTable )
-	if !sched.m_bInitialized then
+RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self, pSchedule, MyTable )
+	MyTable.vaAimTargetPose = self:GetAngles()
+
+	if !pSchedule.m_bInitialized then
 		MyTable.AnimationSystemHalt( self, MyTable )
 		MyTable.PlaySequenceAndWait( self, "stun_start", 1 )
-		sched.m_bInitialized = true
+		pSchedule.m_bInitialized = true
 	end
+
 	// When our nervous system integrity is good enough, perform a calibration test by giving it a shake, to test
 	// whether commands such as "turn the turret 10 degrees right" actually turn it 10 degrees, and not 5 or 20.
 	// We sometimes shake off slower or faster intentionally, to make the enemy unsure if the BMI Error is resolved
@@ -335,6 +367,7 @@ RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self,
 		end
 		return
 	end
+
 	MyTable.flWrongLegPing = math.Clamp( flWrongLegPing - flLegStatus * FrameTime(), 0, 1 )
 	MyTable.flLegStatus = math.Clamp( flLegStatus + .33 * FrameTime(), 0, 1 )
 	// Don't ping the nervous system if we're unsure whether it already works!
@@ -357,6 +390,22 @@ function ENT:OnTakeDamage( dDamage )
 		if self.flLegStatus <= math.Rand( 0, dDamage:GetDamage() / flHealth * 100 ) then self:SetSchedule "GekkoBrainMachineInterfaceError" end
 	end
 	return BaseClass.OnTakeDamage( self, dDamage )
+end
+
+// Abrupt speaker cut
+function ENT:GekkoChirpControllerSet( flVolume ) self.m_flTargetChirpVolume = flVolume end
+
+// Abrupt speaker stop
+function ENT:GekkoChirpControllerCombat( MyTable ) ( MyTable || self ).m_flTargetChirpVolume = 0 end
+
+// Calm raise to pretend to be a swarm of cicadas
+function ENT:GekkoChirpControllerRaise( MyTable, flFrameTime )
+	( MyTable || self ).m_flTargetChirpVolume = math.Approach( ( MyTable || self ).m_flTargetChirpVolume, 1, flFrameTime )
+end
+
+// Calm stop to cut out while still pretending to be a swarm of cicadas
+function ENT:GekkoChirpControllerHush( MyTable, flFrameTime )
+	( MyTable || self ).m_flTargetChirpVolume = math.Approach( ( MyTable || self ).m_flTargetChirpVolume, 0, flFrameTime )
 end
 
 ENT.Defense = {
@@ -444,6 +493,37 @@ ENT.Defense = {
 		end
 	}
 }
+
+RegisterSchedule( "UnmannedGearIRVINGShareAlert", { Execute = function( self, pSchedule, MyTable )
+	MyTable.EScheduleState = ACTOR_STATE_ALERT
+
+	local flMultiplier = math.Rand( .75, 1.25 )
+
+	timer.Simple( .8 / flMultiplier, function()
+		if !IsValid( self ) then return end
+
+		local pAlly = pSchedule.pAlly
+		if IsValid( pAlly ) then MyTable.ShareAlertContext( self, pAlly, MyTable ) end
+
+		util_ScreenShake( self:GetPos() + self:OBBCenter(), 8, 40, 2, 4096, true )
+
+		MyTable.SOUND_CONTEXT_fCallOnAllHearers = function( pHearer )
+			if pHearer.__ACTOR__ && MyTable.Disposition( self, pHearer ) == D_LI then
+				MyTable.ShareAlertContext( self, pHearer, MyTable )
+			end
+		end
+
+		self:EmitSound "GekkoTaunt"
+	end )
+
+	MyTable.AnimationSystemHalt( self, MyTable )
+
+	MyTable.PlaySequenceAndWait( self, "taunt", flMultiplier )
+
+	MyTable.SetSchedule( self, "Alert", MyTable )
+end } )
+
+ENT.m_sDefaultShareAlertSchedule = "UnmannedGearIRVINGShareAlert"
 
 include "Combat.lua"
 include "InspectFirearm.lua"

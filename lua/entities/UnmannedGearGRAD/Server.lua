@@ -291,7 +291,7 @@ RegisterSchedule( "UnmannedGearGRADCombat", { Execute = function( self, sched, M
 	local v = self:GetPos()
 	if pEnemy.__ACTOR_BULLSEYE__ && v:DistToSqr( pEnemy:NearestPoint( v ) ) <= f && ( pEnemy == pTrueEnemy || pTrueEnemy:NearestPoint( pEnemy:GetPos() ):DistToSqr( pEnemy:GetPos() ) > f ) then
 		self:ReportPositionAsClear( pEnemy:GetPos() )
-		return true
+		return
 	end
 
 	local pEnemyPath = MyTable.pEnemyPath
