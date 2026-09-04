@@ -6,8 +6,8 @@ DEFINE_BASECLASS "BaseActor"
 if !CLASS_DESPERADO_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_WORLD_MARSHAL" end
 ENT.iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
-local MACHINEGUN_BONE = "bone055"
-local AUTOCANNON_BONE = "bone000"
+local MACHINEGUN_BONE = "bone056"
+local AUTOCANNON_BONE = "bone010"
 
 ENT.bNightVision = true
 
@@ -98,8 +98,8 @@ function ENT:GrantDefaultSkills()
 	MyTable.GrantSkill( self, "UnmannedGearGRAD.Kord.TactileLaser", MyTable )
 end
 
-ENT.flBodyStiffness = 60
-ENT.flBodyDamping = -120
+ENT.flBodyStiffness = 4
+ENT.flBodyDamping = -12
 
 function ENT:Initialize()
 	self:SetModel "models/dughoo/mgrr2025/grad.mdl"
@@ -153,16 +153,17 @@ end
 
 ENT.flNextMachineGunShot = 0
 
-function ENT:FireMachineGun()
+function ENT:FireKord()
 	if CurTime() <= self.flNextMachineGunShot then return end
 	self.flNextMachineGunShot = CurTime() + .08
 
 	local iBoneID = self:LookupBone( MACHINEGUN_BONE )
 	if !iBoneID then return end
+
 	local vPos, aAngles = self:GetBonePosition( iBoneID )
 
 	local dShoot = aAngles:Up()
-	local vShoot = vPos + aAngles:Up() * 80 - aAngles:Right() * 17
+	local vShoot = vPos + aAngles:Up() * 57 - aAngles:Right() * 3.1
 
 	local pEffectData = EffectData()
 
@@ -173,8 +174,8 @@ function ENT:FireMachineGun()
 	pEffectData:SetStart( vShoot )
 	pEffectData:SetNormal( dShoot )
 	pEffectData:SetAngles( dShoot:Angle() )
-	pEffectData:SetAttachment( 1 )
 	pEffectData:SetMagnitude( 1 / ( .08 * math.Rand( .75, 1.25 ) ) )
+
 	util.Effect( "MuzzleFlashGeneric", pEffectData )
 
 	self:FireBullets {
@@ -191,11 +192,59 @@ function ENT:FireMachineGun()
 	self:EmitSound "KordFire"
 end
 
+ENT.flNextCannonShot = 0
+
+function ENT:FireCannon()
+	if CurTime() <= self.flNextCannonShot then return end
+	self.flNextCannonShot = CurTime() + 1 / 3
+
+	local iBoneID = self:LookupBone( AUTOCANNON_BONE )
+	if !iBoneID then return end
+
+	local vPos, aAngles = self:GetBonePosition( iBoneID )
+
+	local dShoot = aAngles:Up()
+	local aShoot = dShoot:Angle()
+
+	dShoot = ( aShoot:Forward() + ( math.Rand( -.5, .5 ) + math.Rand( -.5, .5 ) ) * .012 * aShoot:Right() + ( math.Rand( -.5, .5 ) + math.Rand( -.5, .5 ) ) * .012 * aShoot:Up() ):GetNormalized()
+	aShoot = dShoot:Angle()
+
+	local vShoot = vPos + aAngles:Up() * 73 - aAngles:Right() * -5
+
+	// TODO: Cannon muzzle flash
+	//local pEffectData = EffectData()
+	//
+	//pEffectData:SetEntity( self )
+	//pEffectData:SetMaterialIndex( 0 )
+	//
+	//pEffectData:SetOrigin( vShoot )
+	//pEffectData:SetStart( vShoot )
+	//pEffectData:SetNormal( dShoot )
+	//pEffectData:SetAngles( dShoot:Angle() )
+	//pEffectData:SetMagnitude( 1 / ( .08 * math.Rand( .75, 1.25 ) ) )
+	//
+	//util.Effect( "MuzzleFlashGeneric", pEffectData )
+
+	local pShell = ents.Create "UnmannedGearGRAD76MMShell"
+	pShell:SetPos( vShoot )
+	pShell:SetAngles( aShoot )
+	pShell:SetOwner( self )
+	pShell:Spawn()
+
+	self:EmitSound "GRADCannonFire"
+end
+
 ENT.aKordAngles = Angle()
 ENT.vKordVelocity = Vector()
 
 ENT.flKordStiffness = 24
 ENT.flKordDamping = -4
+
+ENT.aCannonAngles = Angle()
+ENT.vCannonVelocity = Vector()
+
+ENT.flCannonStiffness = 16
+ENT.flCannonDamping = -4
 
 ENT.flLastCustomBodyYaw = 0
 
@@ -209,15 +258,57 @@ function ENT:Think( ... )
 		self.m_pSkateLoop = pSkateLoop
 	end
 
-	if CurTime() <= self.flSkateTime then
+	local b = CurTime() <= self.flSkateTime
+	self:SetIsSliding( b )
+	if b then
 		pSkateLoop:ChangeVolume( math.Approach( pSkateLoop:GetVolume(), 1, FrameTime() ) )
-		pSkateLoop:ChangePitch( GetVelocity( self ):Length() / self.flTopSpeed * 75 )
+		local flSlide = GetVelocity( self ):Length() / self.flTopSpeed
+		pSkateLoop:ChangePitch( flSlide ^ .5 * 125 )
+		self:SetSlideStrength( flSlide )
 	else
 		pSkateLoop:ChangeVolume( math.Approach( pSkateLoop:GetVolume(), 0, FrameTime() ) )
 	end
 
-	local flOffset = -math.AngleDifference( self:GetAngles()[ 2 ], self.flLastCustomBodyYaw )
-	self.flLastCustomBodyYaw = self:GetAngles()[ 2 ]
+	local iBoneID = self:LookupBone( AUTOCANNON_BONE )
+	if iBoneID then
+		local vPos, aAngles = self:GetBonePosition( iBoneID )
+
+		local aDesAim
+
+		local vShoot = vPos + aAngles:Up() * 73 - aAngles:Right() * -5
+
+		local vaCannonTarget = self.vaAimTargetCannon
+		if isvector( vaCannonTarget ) then
+			aDesAim = ( vaCannonTarget - vShoot ):Angle()
+		elseif isangle( vaCannonTarget ) then
+			aDesAim = vaCannonTarget
+		else aDesAim = self:GetAngles() end
+
+		local aCurrentAngles = self:GetAngles()
+		if self.m_bInBunkerMode then
+			// I don't know why, but for some reason, this simple inversion actually works :D
+			aDesAim[ 1 ] = math.NormalizeAngle( aCurrentAngles[ 1 ] + math.Clamp( math.AngleDifference( aCurrentAngles[ 1 ], aDesAim[ 1 ] ), -60, 60 ) )
+			aDesAim[ 2 ] = math.NormalizeAngle( aCurrentAngles[ 2 ] + math.Clamp( math.AngleDifference( aCurrentAngles[ 2 ], aDesAim[ 2 ] ), -60, 60 ) )
+		else
+			aDesAim[ 1 ] = math.NormalizeAngle( aCurrentAngles[ 1 ] + math.Clamp( math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ), -60, 60 ) )
+			aDesAim[ 2 ] = math.NormalizeAngle( aCurrentAngles[ 2 ] + math.Clamp( math.AngleDifference( aDesAim[ 2 ], aCurrentAngles[ 2 ] ), -60, 60 ) )
+		end
+
+		local aCannonAngles = self.aCannonAngles
+		aCurrentAngles:Add( aCannonAngles )
+
+		local vCannonVelocity = self.vCannonVelocity
+		vCannonVelocity:Add( Vector(
+			math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ),
+			math.AngleDifference( aDesAim[ 2 ], aCurrentAngles[ 2 ] )
+		) * self.flCannonStiffness * FrameTime() )
+		vCannonVelocity:Mul( math.exp( self.flCannonDamping * FrameTime() ) )
+
+		aCannonAngles[ 1 ] = aCannonAngles[ 1 ] + vCannonVelocity[ 1 ] * FrameTime()
+		aCannonAngles[ 2 ] = aCannonAngles[ 2 ] + vCannonVelocity[ 2 ] * FrameTime()
+
+		self:ManipulateBoneAngles( iBoneID, Angle( aCannonAngles[ 2 ], 0, aCannonAngles[ 1 ] ) )
+	end
 
 	local iBoneID = self:LookupBone( MACHINEGUN_BONE )
 	if iBoneID then
@@ -225,7 +316,7 @@ function ENT:Think( ... )
 
 		local aDesAim
 
-		local vShoot = vPos + aAngles:Up() * 80 - aAngles:Right() * 17
+		local vShoot = vPos + aAngles:Up() * 57 - aAngles:Right() * 3.1
 
 		local vaKordTarget = self.vaAimTargetKord
 		if isvector( vaKordTarget ) then
@@ -248,7 +339,7 @@ function ENT:Think( ... )
 		vKordVelocity:Mul( math.exp( self.flKordDamping * FrameTime() ) )
 
 		aKordAngles[ 1 ] = aKordAngles[ 1 ] + vKordVelocity[ 1 ] * FrameTime()
-		aKordAngles[ 2 ] = aKordAngles[ 2 ] + vKordVelocity[ 2 ] * FrameTime() + flOffset
+		aKordAngles[ 2 ] = aKordAngles[ 2 ] + vKordVelocity[ 2 ] * FrameTime()
 
 		if self:HasSkill "UnmannedGearGRAD.Kord.TactileLaser" then
 			local tr = util.TraceLine {
@@ -258,13 +349,32 @@ function ENT:Think( ... )
 				mask = MASK_OPAQUE_AND_NPCS
 			}
 			local pEntity = tr.Entity
-			if IsValid( pEntity ) && self:UpdateMemory( pEntity ) == "Hostile" then self:FireMachineGun() end
+			if IsValid( pEntity ) && self:UpdateMemory( pEntity ) == "Hostile" then self:FireKord() end
 		end
 
 		self:ManipulateBoneAngles( iBoneID, Angle( aKordAngles[ 2 ], 0, aKordAngles[ 1 ] ) )
 	end
 
 	return BaseClass.Think( self, ... )
+end
+
+function ENT:CanFireKord( pEnemy, pTrueEnemy, MyTable )
+	local iBoneID = self:LookupBone( MACHINEGUN_BONE )
+	if !iBoneID then return end
+
+	local vPos, aAngles = self:GetBonePosition( iBoneID )
+
+	return MyTable.CanAttackCustom( self, pEnemy, pTrueEnemy, MyTable, nil, aAngles:Up(), vPos + aAngles:Up() * 80 - aAngles:Right() * 17, .17, .17 )
+end
+
+function ENT:CanFireCannon( pEnemy, pTrueEnemy, MyTable )
+	local iBoneID = self:LookupBone( AUTOCANNON_BONE )
+	if !iBoneID then return end
+
+	local vPos, aAngles = self:GetBonePosition( iBoneID )
+
+	// TODO: Implement CanAttackCustomRadius
+	return MyTable.CanAttackCustom( self, pEnemy, pTrueEnemy, MyTable, nil, aAngles:Up(), vPos + aAngles:Up() * 73 - aAngles:Right() * -5, .12, .12 )
 end
 
 function ENT:OnRemove()
@@ -277,13 +387,41 @@ function ENT:Stand() self.loco:SetJumpHeight( 0 ) BaseClass.Stand( self ) end
 
 ENT.m_sDefaultCombatSchedule = "UnmannedGearGRADCombat"
 
-RegisterSchedule( "UnmannedGearGRADCombat", { Execute = function( self, sched, MyTable )
+RegisterSchedule( "UnmannedGearGRADCombat", { Execute = function( self, pSchedule, MyTable )
 	if table.IsEmpty( MyTable.tEnemies ) then return true end
-	local pEnemy = self.Enemy
+
+	local pEnemy = MyTable.Enemy
 	if !IsValid( pEnemy ) then return true end
-	local pEnemy, pTrueEnemy = self:SetupEnemy( pEnemy )
+
+	local pEnemy, pTrueEnemy = MyTable.SetupEnemy( self, pEnemy )
 
 	MyTable.vaAimTargetKord = pEnemy:GetPos() + pEnemy:OBBCenter()
+	MyTable.vaAimTargetCannon = MyTable.vaAimTargetKord
+
+	local f = self:BoundingRadius()
+	f = f * f
+
+	local v = self:GetPos()
+	if pEnemy.__ACTOR_BULLSEYE__ && v:DistToSqr( pEnemy:NearestPoint( v ) ) <= f && ( pEnemy == pTrueEnemy || pTrueEnemy:NearestPoint( pEnemy:GetPos() ):DistToSqr( pEnemy:GetPos() ) > f ) then
+		self:ReportPositionAsClear( pEnemy:GetPos() )
+		return
+	end
+
+	if self:Visible( pEnemy ) && !MyTable.UpdatePursuitSenses( self, pEnemy, pTrueEnemy, MyTable ) && math.random( 2 ) == 1 then
+		MyTable.SetSchedule( self, "GRADCombatWalk", MyTable )
+	else MyTable.SetSchedule( self, "GRADSlideToMelee", MyTable ) end
+end } )
+
+RegisterSchedule( "GRADSlideToMelee", { Execute = function( self, pSchedule, MyTable )
+	if table.IsEmpty( MyTable.tEnemies ) then return true end
+
+	local pEnemy = MyTable.Enemy
+	if !IsValid( pEnemy ) then return true end
+
+	local pEnemy, pTrueEnemy = MyTable.SetupEnemy( self, pEnemy )
+
+	MyTable.vaAimTargetKord = pEnemy:GetPos() + pEnemy:OBBCenter()
+	MyTable.vaAimTargetCannon = MyTable.vaAimTargetKord
 
 	local f = self:BoundingRadius()
 	f = f * f
@@ -296,12 +434,92 @@ RegisterSchedule( "UnmannedGearGRADCombat", { Execute = function( self, sched, M
 
 	local pEnemyPath = MyTable.pEnemyPath
 	if !pEnemyPath then pEnemyPath = Path "Follow" MyTable.pEnemyPath = pEnemyPath end
-	if LevelOfDetail( sched, "flNextRePath" ) then MyTable.ComputeFlankPath( self, pEnemyPath, pEnemy, MyTable ) end
+	if LevelOfDetail( pSchedule, "flNextRePath" ) then MyTable.ComputeFlankPath( self, pEnemyPath, pEnemy, MyTable ) end
 
 	MyTable.MoveAlongPath( self, pEnemyPath, MyTable.flTopSpeed )
 
 	local pGoal = pEnemyPath:GetCurrentGoal()
 	if pGoal then MyTable.vaAimTargetBody = ( pGoal.pos - self:GetPos() ):Angle() end
+
+
+	MyTable.flWeaponPrimaryVolleyTimeMin = 0
+	MyTable.flWeaponPrimaryVolleyTimeMax = 2
+
+	MyTable.flWeaponPrimaryVolleyBreakMin = 0
+	MyTable.flWeaponPrimaryVolleyBreakMax = 1
+
+	if MyTable.WeaponPrimaryVolleyContainer( self, "Kord", true, MyTable ) && MyTable.CanFireKord( self, pEnemy, pTrueEnemy, MyTable ) then MyTable.FireKord( self, MyTable ) end
+
+
+	MyTable.flWeaponPrimaryVolleyTimeMin = 0
+	MyTable.flWeaponPrimaryVolleyTimeMax = 4
+
+	MyTable.flWeaponPrimaryVolleyBreakMin = 0
+	MyTable.flWeaponPrimaryVolleyBreakMax = 16
+
+	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMin = 0
+	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMax = 1
+
+	if MyTable.WeaponPrimaryVolleyContainer( self, "Cannon", nil, MyTable ) && MyTable.CanFireCannon( self, pEnemy, pTrueEnemy, MyTable ) then MyTable.FireCannon( self, MyTable ) end
+
+	if !MyTable.UpdatePursuitSenses( self, pEnemy, pTrueEnemy, MyTable ) && self:Visible( pEnemy ) && math.random() <= .2 * FrameTime() then
+		MyTable.SetSchedule( self, "GRADCombatWalk", MyTable )
+	end
+end } )
+
+RegisterSchedule( "GRADCombatWalk", { Execute = function( self, pSchedule, MyTable )
+	if table.IsEmpty( MyTable.tEnemies ) then return true end
+
+	local pEnemy = MyTable.Enemy
+	if !IsValid( pEnemy ) then return true end
+
+	local pEnemy, pTrueEnemy = MyTable.SetupEnemy( self, pEnemy )
+
+	MyTable.vaAimTargetKord = pEnemy:GetPos() + pEnemy:OBBCenter()
+	MyTable.vaAimTargetCannon = MyTable.vaAimTargetKord
+
+	local f = self:BoundingRadius()
+	f = f * f
+
+	local v = self:GetPos()
+	if pEnemy.__ACTOR_BULLSEYE__ && v:DistToSqr( pEnemy:NearestPoint( v ) ) <= f && ( pEnemy == pTrueEnemy || pTrueEnemy:NearestPoint( pEnemy:GetPos() ):DistToSqr( pEnemy:GetPos() ) > f ) then
+		self:ReportPositionAsClear( pEnemy:GetPos() )
+		return
+	end
+
+	local pEnemyPath = MyTable.pEnemyPath
+	if !pEnemyPath then pEnemyPath = Path "Follow" MyTable.pEnemyPath = pEnemyPath end
+	if LevelOfDetail( pSchedule, "flNextRePath" ) then MyTable.ComputeFlankPath( self, pEnemyPath, pEnemy, MyTable ) end
+
+	MyTable.MoveAlongPath( self, pEnemyPath, MyTable.flWalkSpeed )
+
+	local pGoal = pEnemyPath:GetCurrentGoal()
+	if pGoal then MyTable.vaAimTargetBody = ( pGoal.pos - self:GetPos() ):Angle() end
+
+
+	MyTable.flWeaponPrimaryVolleyTimeMin = 0
+	MyTable.flWeaponPrimaryVolleyTimeMax = 3
+
+	MyTable.flWeaponPrimaryVolleyBreakMin = 0
+	MyTable.flWeaponPrimaryVolleyBreakMax = 1
+
+	if MyTable.WeaponPrimaryVolleyContainer( self, "Kord", true, MyTable ) && MyTable.CanFireKord( self, pEnemy, pTrueEnemy, MyTable ) then MyTable.FireKord( self, MyTable ) end
+
+
+	MyTable.flWeaponPrimaryVolleyTimeMin = 0
+	MyTable.flWeaponPrimaryVolleyTimeMax = 4
+
+	MyTable.flWeaponPrimaryVolleyBreakMin = 0
+	MyTable.flWeaponPrimaryVolleyBreakMax = 8
+
+	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMin = 0
+	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMax = 1
+
+	if MyTable.WeaponPrimaryVolleyContainer( self, "Cannon", nil, MyTable ) && MyTable.CanFireCannon( self, pEnemy, pTrueEnemy, MyTable ) then MyTable.FireCannon( self, MyTable ) end
+
+	if MyTable.UpdatePursuitSenses( self, pEnemy, pTrueEnemy, MyTable ) || math.random() <= ( self:Visible( pEnemy ) && .1 || .5 ) * MyTable.m_flFrameTime then
+		MyTable.SetSchedule( self, "GRADSlideToMelee", MyTable )
+	end
 end } )
 
 local math_Rand = math.Rand
@@ -309,19 +527,35 @@ local math_Rand = math.Rand
 local WALL_MELEE_MINS = Vector( -48, -48, 12 )
 local WALL_MELEE_MAXS = Vector( 48, 48, 64 )
 
-RegisterSchedule( "UnmannedGearGRADBunker", {
-	Execute = function( self, sched, MyTable )
+local function BunkerFire( self, pSchedule, MyTable, pEnemy, pTrueEnemy )
+	MyTable.vaAimTargetKord = pEnemy:GetPos() + pEnemy:OBBCenter()
+	MyTable.vaAimTargetCannon = MyTable.vaAimTargetKord
+	
+	MyTable.flWeaponPrimaryVolleyTimeMin = 0
+	MyTable.flWeaponPrimaryVolleyTimeMax = 4
+	
+	MyTable.flWeaponPrimaryVolleyBreakMin = 0
+	MyTable.flWeaponPrimaryVolleyBreakMax = 1
+	
+	if MyTable.WeaponPrimaryVolleyContainer( self, "Kord", true, MyTable ) && MyTable.CanFireKord( self, pEnemy, pTrueEnemy, MyTable ) then MyTable.FireKord( self, MyTable ) end
+
+	// Autocannon is handled differently!
+end
+
+RegisterSchedule( "GRADBunker", {
+	Execute = function( self, pSchedule, MyTable )
 		MyTable.flAnimationSystemStopFor = CurTime() + 1
 
 		MyTable.flOverrideAimStiffnessThisTick = 0
 
 		MyTable.vaAimTargetBody = self:GetAngles()
 
-		local pEnemy = self.Enemy
+		local pEnemy = MyTable.Enemy
 		local bIdle = !IsValid( pEnemy ) || table.IsEmpty( MyTable.tEnemies )
 		if !MyTable.m_bInBunkerMode then
 			MyTable.AnimationSystemHalt( self, MyTable )
 			MyTable.m_bInBunkerMode = true
+			self:SetIsSliding( false )
 			MyTable.PlaySequenceAndWait( self, "wall_enter", bIdle && math_Rand( .5, 1 ) || math_Rand( 1, 1.5 ), true )
 			MyTable.flAnimationSystemStopFor = CurTime() + 1
 			return
@@ -331,9 +565,20 @@ RegisterSchedule( "UnmannedGearGRADBunker", {
 			return
 		end
 
-		local pEnemy, pTrueEnemy = self:SetupEnemy( pEnemy )
+		local pEnemy, pTrueEnemy = MyTable.SetupEnemy( self, pEnemy )
 
-		MyTable.vaAimTargetKord = pEnemy:GetPos() + pEnemy:OBBCenter()
+
+		BunkerFire( self, pSchedule, MyTable, pEnemy, pTrueEnemy )
+
+
+		MyTable.flWeaponPrimaryVolleyTimeMin = 0
+		MyTable.flWeaponPrimaryVolleyTimeMax = 3
+
+		MyTable.flWeaponPrimaryVolleyBreakMin = 0
+		MyTable.flWeaponPrimaryVolleyBreakMax = 1
+
+		if MyTable.WeaponPrimaryVolleyContainer( self, "Cannon", true, MyTable ) && MyTable.CanFireCannon( self, pEnemy, pTrueEnemy, MyTable ) then MyTable.FireCannon( self, MyTable ) end
+
 
 		local bHit
 		if util.TraceHull( {
@@ -388,7 +633,10 @@ RegisterSchedule( "UnmannedGearGRADBunker", {
 			end )
 
 			MyTable.AnimationSystemHalt( self, MyTable )
-			MyTable.PlaySequenceAndWait( self, "wall_attack1", flMultiplier, true )
+			MyTable.PlaySequenceAndWait( self, "wall_attack1", flMultiplier, true, function()
+				if !IsValid( pEnemy ) || !IsValid( pTrueEnemy ) then return end
+				BunkerFire( self, pSchedule, MyTable, pEnemy, pTrueEnemy )
+			end )
 			MyTable.flAnimationSystemStopFor = CurTime() + 1
 		end
 	end,
@@ -400,6 +648,7 @@ RegisterSchedule( "UnmannedGearGRADBunker", {
 			if MyTable.m_bInBunkerMode then
 				MyTable.AnimationSystemHalt( self, MyTable )
 				MyTable.m_bInBunkerMode = nil
+				self:SetIsSliding( false )
 				MyTable.PlaySequenceAndWait( self, "wall_exit", ( !IsValid( MyTable.Enemy ) || table.IsEmpty( MyTable.tEnemies ) ) && math_Rand( .5, 1 ) || math_Rand( 1, 1.5 ), true )
 			end
 		end

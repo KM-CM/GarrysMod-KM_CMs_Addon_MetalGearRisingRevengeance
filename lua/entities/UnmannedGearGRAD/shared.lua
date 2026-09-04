@@ -123,11 +123,46 @@ sound.Add {
 	}
 }
 
+sound.Add {
+	name = "GRADSmallMissileFireShotgun",
+	channel = CHAN_STATIC,
+	level = 140,
+	pitch = { 80, 120 },
+	sound = {
+		"^GRAD/SmallMissileFire1.wav",
+		"^GRAD/SmallMissileFire2.wav",
+		"^GRAD/SmallMissileFire3.wav",
+		"^GRAD/SmallMissileFire4.wav"
+	}
+}
+
+sound.Add {
+	name = "GRADSmallMissileFireVolley",
+	channel = CHAN_WEAPON,
+	level = 140,
+	pitch = { 80, 120 },
+	sound = {
+		"^GRAD/SmallMissileFire1.wav",
+		"^GRAD/SmallMissileFire2.wav",
+		"^GRAD/SmallMissileFire3.wav",
+		"^GRAD/SmallMissileFire4.wav"
+	}
+}
+
+// TODO: We REALLY need a better sound for this
+sound.Add {
+	name = "GRADCannonFire",
+	channel = CHAN_STATIC,
+	level = 150,
+	pitch = { 90, 110 },
+	sound = "weapons/mortar/mortar_fire1.wav"
+}
+
 function ENT:GetMuzzleFlashPosition( sMuzzleFlash )
-	local iBoneID = self:LookupBone "bone055"
+	local iBoneID = self:LookupBone "bone056"
 	if !iBoneID then return vector_origin end
 	local vPos, aAngles = self:GetBonePosition( iBoneID )
-	return vPos + aAngles:Up() * 80 - aAngles:Right() * 17
+	return vPos + aAngles:Up() * 57 - aAngles:Right() * 3.1
 end
 
 function ENT:GetMuzzleFlashAngles( sMuzzleFlash )
@@ -137,4 +172,12 @@ function ENT:GetMuzzleFlashAngles( sMuzzleFlash )
 	return aAngles:Up():Angle()
 end
 
-if SERVER then include "Server.lua" end
+function ENT:SetupDataTables()
+	self:NetworkVar( "Bool", "IsSliding" )
+	self:NetworkVar( "Float", "SlideStrength" )
+end
+
+if SERVER then
+	include "Server.lua"
+	AddCSLuaFile "Slide.lua"
+else include "Slide.lua" end
