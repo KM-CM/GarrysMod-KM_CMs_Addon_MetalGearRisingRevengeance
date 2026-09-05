@@ -1,6 +1,5 @@
 AddCSLuaFile()
 DEFINE_BASECLASS "UnmannedGearGRAD"
-ENT.Base = "UnmannedGearGRAD"
 
 scripted_ents.Register( ENT, "WorldMarshalUnmannedGearGRAD" )
 
@@ -10,9 +9,9 @@ list.Set( "NPC", "WorldMarshalUnmannedGearGRAD", {
 	Category = "#WorldMarshal"
 } )
 
-if !SERVER then return end
+if CLIENT then return end
 
 function ENT:Initialize()
-	BaseClass.Initialize( self )
 	self:SetSkin( 1 )
+	BaseClass.Initialize( self )
 end

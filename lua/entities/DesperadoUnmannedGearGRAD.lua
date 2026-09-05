@@ -1,6 +1,5 @@
 AddCSLuaFile()
 DEFINE_BASECLASS "UnmannedGearGRAD"
-ENT.Base = "UnmannedGearGRAD"
 
 scripted_ents.Register( ENT, "DesperadoUnmannedGearGRAD" )
 

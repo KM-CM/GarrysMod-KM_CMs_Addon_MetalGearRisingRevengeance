@@ -103,13 +103,25 @@ ENT.flBodyDamping = -12
 
 function ENT:Initialize()
 	self:SetModel "models/dughoo/mgrr2025/grad.mdl"
+
 	self:SetHealth( 65536 )
 	self:SetMaxHealth( 65536 )
+
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
+
 	self:SetBloodColor( BLOOD_COLOR_MECH )
+
 	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 36288 ) end
-	BaseClass.Initialize( self )
+
 	self:GrantDefaultSkills()
+
+	self.aKordAngles = Angle()
+	self.vKordVelocity = Vector()
+
+	self.aCannonAngles = Angle()
+	self.vCannonVelocity = Vector()
+
+	BaseClass.Initialize( self )
 end
 
 function ENT:OnKilled( ... )
@@ -234,14 +246,8 @@ function ENT:FireCannon()
 	self:EmitSound "GRADCannonFire"
 end
 
-ENT.aKordAngles = Angle()
-ENT.vKordVelocity = Vector()
-
 ENT.flKordStiffness = 24
 ENT.flKordDamping = -4
-
-ENT.aCannonAngles = Angle()
-ENT.vCannonVelocity = Vector()
 
 ENT.flCannonStiffness = 16
 ENT.flCannonDamping = -4
@@ -270,7 +276,7 @@ function ENT:Think( ... )
 	end
 
 	local iBoneID = self:LookupBone( AUTOCANNON_BONE )
-	if iBoneID then
+	if iBoneID && self.aCannonAngles then
 		local vPos, aAngles = self:GetBonePosition( iBoneID )
 
 		local aDesAim
@@ -311,7 +317,7 @@ function ENT:Think( ... )
 	end
 
 	local iBoneID = self:LookupBone( MACHINEGUN_BONE )
-	if iBoneID then
+	if iBoneID && self.aKordAngles then
 		local vPos, aAngles = self:GetBonePosition( iBoneID )
 
 		local aDesAim
@@ -562,6 +568,7 @@ RegisterSchedule( "GRADBunker", {
 		end
 
 		if bIdle then
+			if math.random() <= .01 * MyTable.m_flFrameTime then return true end
 			return
 		end
 

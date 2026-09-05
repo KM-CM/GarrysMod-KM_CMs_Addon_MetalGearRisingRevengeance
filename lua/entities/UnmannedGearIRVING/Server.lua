@@ -146,6 +146,8 @@ function ENT:Initialize()
 	self:SetMaxHealth( 16384 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
 	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 9072 ) end
+	self.aHeadAngles = Angle()
+	self.vHeadVelocity = Vector()
 	BaseClass.Initialize( self )
 end
 
@@ -193,9 +195,6 @@ function ENT:PostJumpInternal() self:EmitSound "GekkoJump" end
 
 local HEAD_BONE = "bone003"
 
-ENT.aHeadAngles = Angle()
-ENT.vHeadVelocity = Vector()
-
 ENT.flHeadStiffness = 8
 ENT.flHeadDamping = -4
 
@@ -239,7 +238,7 @@ function ENT:HandleTurning( MyTable )
 	local flFrameTime = BaseClass.HandleTurning( self, MyTable )
 
 	local iBoneID = self:LookupBone( HEAD_BONE )
-	if iBoneID then
+	if iBoneID && self.aHeadAngles then
 		local vPos, aAngles = self:GetBonePosition( iBoneID )
 
 		local aManip = self:GetManipulateBoneAngles( iBoneID )
