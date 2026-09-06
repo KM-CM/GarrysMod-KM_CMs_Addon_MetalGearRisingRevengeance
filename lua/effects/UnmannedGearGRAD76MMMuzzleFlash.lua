@@ -1,0 +1,202 @@
+local RENDERMODE_TRANSALPHA = RENDERMODE_TRANSALPHA
+local ParticleEmitter = ParticleEmitter
+local math_max = math.max
+local math_Rand = math.Rand
+local math_random = math.random
+local VectorRand = VectorRand
+local abs = math.abs
+local vector_origin = vector_origin
+
+EFFECT.flLifeTime = 0
+
+function EFFECT:Init( pData )
+	self:SetRenderMode( RENDERMODE_TRANSALPHA )
+
+	local fGetPos, fGetAngles = function() return vector_origin end, function() return angle_zero end
+
+	local v = pData:GetStart()
+	local pEntity = pData:GetEntity()
+	local pOwner = pEntity:GetOwner()
+
+	local fGetMuzzleFlashPosition = pEntity.GetMuzzleFlashPosition
+	local bCustomPosition = fGetMuzzleFlashPosition && fGetMuzzleFlashPosition( pEntity, "UnmannedGearGRAD76MMMuzzleFlash", iGetMaterialIndex )
+	if bCustomPosition then
+		local iGetMaterialIndex = pData:GetMaterialIndex()
+		fGetPos = function()
+			if !IsValid( pEntity ) then return vector_origin end
+			return fGetMuzzleFlashPosition( pEntity, "UnmannedGearGRAD76MMMuzzleFlash", iGetMaterialIndex ) || vector_origin
+		end
+	end
+
+	local fGetMuzzleFlashAngles = pEntity.GetMuzzleFlashAngles
+	local bCustomAngles = fGetMuzzleFlashAngles && fGetMuzzleFlashAngles( pEntity, "UnmannedGearGRAD76MMMuzzleFlash", iGetMaterialIndex )
+	if bCustomAngles then
+		local iGetMaterialIndex = pData:GetMaterialIndex()
+		fGetAngles = function()
+			if !IsValid( pEntity ) then return angle_zero end
+			return fGetMuzzleFlashAngles( pEntity, "UnmannedGearGRAD76MMMuzzleFlash", iGetMaterialIndex ) || angle_zero
+		end
+	end
+
+	if !bCustomPosition && IsValid( pEntity ) then
+		if IsValid( pOwner ) then
+			local iAttachment = pData:GetAttachment()
+			v = self:GetTracerShootPos( vector_origin, pEntity, iAttachment )
+			fGetPos = function()
+				if !IsValid( self ) then return vector_origin end
+				return self:GetTracerShootPos( vector_origin, pEntity, iAttachment )
+			end
+		end
+		if v == vector_origin then
+			fGetPos = function()
+				if !IsValid( pEntity ) then return vector_origin end
+
+				// Render origin changes the "real" position of the entity on the client,
+				// thus GetPos() and GetAngles() can be used to never worry about nil values
+
+				//	local vRenderOrigin = pEntity:GetRenderOrigin()
+				//	local aRenderAngles = pEntity:GetRenderAngles()
+				//	if aRenderAngles then vRenderOrigin = vRenderOrigin + aRenderAngles:Forward() * 13 + aRenderAngles:Up() * 6 end
+
+				local vRenderOrigin = pEntity:GetPos()
+				local aRenderAngles = pEntity:GetAngles()
+				vRenderOrigin = vRenderOrigin + aRenderAngles:Forward() * 13 + aRenderAngles:Up() * 6
+
+				return vRenderOrigin
+			end
+		end
+	end
+
+	if !bCustomAngles then
+		fGetAngles = function()
+			if !IsValid( pOwner ) then return angle_zero end
+			return pOwner:EyeAngles()
+		end
+	end
+
+	self.m_pEntity = pEntity
+
+	local flScale = 5 - 4 * math_random() * math_random()
+
+	local pLight = EphemeralLight()
+	if pLight then
+		pLight.brightness = math_Rand( 6, 8 )
+		pLight.size = 224 * flScale
+		local f = math_Rand( .1, .5 )
+		pLight.dietime = CurTime() + f
+		pLight.decay = 1000 / f
+		pLight.pos = fGetPos()
+		pLight.r = 255
+		pLight.g = 64
+		pLight.b = 0
+	end
+
+	local vVelocity = IsValid( pOwner ) && pOwner:GetVelocity() || vector_origin
+	local pEmitter = ParticleEmitter( fGetPos() )
+	local flLifeTime = .25
+
+	local aAngles = pData:GetAngles()
+	local vForward = Vector( 1, 0, 0 )
+	local vRight = Vector( 0, -1, 0 )
+	local vUp = Vector( 0, 0, 1 )
+
+	for i = 1, 64 do
+		local pPart = pEmitter:Add( "effects/muzzleflash" .. math_random( 1, 4 ), fGetPos() )
+
+		local flResultingSpreadRight = ( math_Rand( -.5, .5 ) + math_Rand( -.5, .5 ) )
+		local flResultingSpreadUp = ( math_Rand( -.5, .5 ) + math_Rand( -.5, .5 ) )
+		local vAdd = ( vForward + flResultingSpreadRight * vRight + flResultingSpreadUp * vUp ):GetNormalized()
+		pPart:SetVelocity( vAdd / math_max( .1, abs( flResultingSpreadRight ) + abs( flResultingSpreadUp ) ) * flScale / flLifeTime * 3 )
+		pPart.m_vOffset = Vector()
+
+		pPart:SetDieTime( flLifeTime * math_Rand( .5, 1.5 ) )
+		pPart:SetStartAlpha( 255 )
+		pPart:SetEndAlpha( 0 )
+		pPart:SetStartSize( 0 )
+		pPart:SetEndSize( math_Rand( 12, 16 ) * flScale )
+		pPart:SetRoll( math_Rand( 180, 480 ) )
+		pPart:SetRollDelta( math_Rand( -1, 1 ) )
+		pPart:SetColor( 255, 180, 120 )
+		pPart:SetAirResistance( 140 )
+
+		pPart:SetNextThink( CurTime() )
+		pPart:SetThinkFunction( function()
+			local vOffset = pPart.m_vOffset
+			vOffset:Add( pPart:GetVelocity() * FrameTime() )
+			local v = Vector( vOffset )
+			v:Rotate( fGetAngles() )
+			v:Add( fGetPos() )
+			pPart:SetPos( v )
+			pPart:SetNextThink( CurTime() )
+		end )
+	end
+
+	for i = 1, 32 do
+		local pPart = pEmitter:Add( "effects/muzzleflash" .. math_random( 1, 4 ), fGetPos() )
+
+		local flResultingSpreadRight = ( math_Rand( -.5, .5 ) + math_Rand( -.5, .5 ) ) * .2
+		local flResultingSpreadUp = ( math_Rand( -.5, .5 ) + math_Rand( -.5, .5 ) ) * .2
+		local vAdd = ( vForward + flResultingSpreadRight * vRight + flResultingSpreadUp * vUp ):GetNormalized()
+		pPart:SetVelocity( vAdd / math_max( .1, abs( flResultingSpreadRight ) + abs( flResultingSpreadUp ) ) * flScale / flLifeTime * 3 )
+		pPart.m_vOffset = Vector()
+
+		pPart:SetDieTime( flLifeTime * math_Rand( .5, 1.5 ) )
+		pPart:SetStartAlpha( 255 )
+		pPart:SetEndAlpha( 0 )
+		pPart:SetStartSize( 0 )
+		pPart:SetEndSize( math_Rand( 12, 16 ) * flScale )
+		pPart:SetRoll( math_Rand( 180, 480 ) )
+		pPart:SetRollDelta( math_Rand( -1, 1 ) )
+		pPart:SetColor( 255, 180, 120 )
+		pPart:SetAirResistance( 140 )
+
+		pPart:SetNextThink( CurTime() )
+		pPart:SetThinkFunction( function()
+			local vOffset = pPart.m_vOffset
+			vOffset:Add( pPart:GetVelocity() * FrameTime() )
+			local v = Vector( vOffset )
+			v:Rotate( fGetAngles() )
+			v:Add( fGetPos() )
+			pPart:SetPos( v )
+			pPart:SetNextThink( CurTime() )
+		end )
+	end
+
+	for i = 1, 8 do
+		local pPart = pEmitter:Add( "GRAD76MMMuzzleFlashHeatHaze", fGetPos() )
+
+		local flResultingSpreadRight = ( math_Rand( -.5, .5 ) + math_Rand( -.5, .5 ) )
+		local flResultingSpreadUp = ( math_Rand( -.5, .5 ) + math_Rand( -.5, .5 ) )
+		local vAdd = ( vForward + flResultingSpreadRight * vRight + flResultingSpreadUp * vUp ):GetNormalized()
+		pPart:SetVelocity( vAdd / math_max( .1, abs( flResultingSpreadRight ) + abs( flResultingSpreadUp ) ) * flScale / flLifeTime * 4 )
+		pPart.m_vOffset = Vector()
+
+		pPart:SetDieTime( flLifeTime * math_Rand( 2.25, 4.5 ) )
+		pPart:SetStartAlpha( 0 )
+		pPart:SetEndAlpha( 255 )
+		pPart:SetStartSize( math_Rand( 32, 48 ) * flScale )
+		pPart:SetEndSize( 0 )
+		pPart:SetRoll( math_Rand( 180, 480 ) )
+		pPart:SetRollDelta( math_Rand( -3, 3 ) )
+		pPart:SetColor( 255, 180, 120 )
+		pPart:SetAirResistance( 140 )
+
+		pPart:SetNextThink( CurTime() )
+		pPart:SetThinkFunction( function()
+			local vOffset = pPart.m_vOffset
+			vOffset:Add( pPart:GetVelocity() * FrameTime() )
+			local v = Vector( vOffset )
+			v:Rotate( fGetAngles() )
+			v:Add( fGetPos() )
+			pPart:SetPos( v )
+			pPart:SetNextThink( CurTime() )
+		end )
+	end
+
+	pEmitter:Finish()
+
+	self.flLifeTime = CurTime() + 4.5 * flScale
+end
+
+function EFFECT:Render() end
+function EFFECT:Think() return CurTime() <= self.flLifeTime end

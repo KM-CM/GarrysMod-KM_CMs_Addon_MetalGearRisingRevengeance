@@ -79,7 +79,7 @@ end
 
 ENT.__PROJECTILE_EXPLOSION__ = true
 ENT.EXPLOSION_flDamage = 1600
-ENT.EXPLOSION_flRadius = 84
+ENT.EXPLOSION_flRadius = 360
 
 ENT.__PROJECTILE_ROCKET__ = true
 ENT.ROCKET_flSpeed = 16384
@@ -105,7 +105,6 @@ end
 local util_BlastDamage = util.BlastDamage
 local CEntity_GetOwner = CEntity.GetOwner
 local IsValid = IsValid
-local ParticleEffect = ParticleEffect
 
 local CEntity_GetPos = CEntity.GetPos
 local CEntity_OBBCenter = CEntity.OBBCenter
@@ -114,6 +113,7 @@ local CEntity_GetAngles = CEntity.GetAngles
 local CEntity_EmitSound = CEntity.EmitSound
 local CEntity_WaterLevel = CEntity.WaterLevel
 local CEntity_Remove = CEntity.Remove
+local EffectData = EffectData
 local util_Effect = util.Effect
 
 function ENT:Detonate( MyTable )
@@ -133,9 +133,11 @@ function ENT:Detonate( MyTable )
 	local flMagnitude = MyTable.flMagnitude
 	local flDistance = MyTable.EXPLOSION_flRadius
 
-	util_BlastDamage( self, pOwner, self:GetPos(), flDistance, MyTable.EXPLOSION_flDamage )
+	util_BlastDamage( self, pOwner, vCenter, flDistance, MyTable.EXPLOSION_flDamage )
 
-	// TODO: Explosion effects
+	local pData = EffectData()
+	pData:SetOrigin( vCenter )
+	util_Effect( "UnmannedGearGRAD76MMImpact", pData )
 
 	MyTable.bDetonated = true
 

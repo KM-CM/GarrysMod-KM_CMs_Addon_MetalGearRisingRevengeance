@@ -221,21 +221,15 @@ function ENT:FireCannon()
 	dShoot = ( aShoot:Forward() + ( math.Rand( -.5, .5 ) + math.Rand( -.5, .5 ) ) * .012 * aShoot:Right() + ( math.Rand( -.5, .5 ) + math.Rand( -.5, .5 ) ) * .012 * aShoot:Up() ):GetNormalized()
 	aShoot = dShoot:Angle()
 
-	local vShoot = vPos + aAngles:Up() * 73 - aAngles:Right() * -5
+	local vShoot = vPos + aAngles:Up() * 73 + aAngles:Right() * 5
 
-	// TODO: Cannon muzzle flash
-	//local pEffectData = EffectData()
-	//
-	//pEffectData:SetEntity( self )
-	//pEffectData:SetMaterialIndex( 0 )
-	//
-	//pEffectData:SetOrigin( vShoot )
-	//pEffectData:SetStart( vShoot )
-	//pEffectData:SetNormal( dShoot )
-	//pEffectData:SetAngles( dShoot:Angle() )
-	//pEffectData:SetMagnitude( 1 / ( .08 * math.Rand( .75, 1.25 ) ) )
-	//
-	//util.Effect( "MuzzleFlashGeneric", pEffectData )
+	local pEffectData = EffectData()
+	pEffectData:SetEntity( self )
+	pEffectData:SetOrigin( vShoot )
+	pEffectData:SetStart( vShoot )
+	pEffectData:SetNormal( dShoot )
+	pEffectData:SetAngles( dShoot:Angle() )
+	util.Effect( "UnmannedGearGRAD76MMMuzzleFlash", pEffectData )
 
 	local pShell = ents.Create "UnmannedGearGRAD76MMShell"
 	pShell:SetPos( vShoot )
@@ -281,7 +275,7 @@ function ENT:Think( ... )
 
 		local aDesAim
 
-		local vShoot = vPos + aAngles:Up() * 73 - aAngles:Right() * -5
+		local vShoot = vPos + aAngles:Up() * 73 + aAngles:Right() * 5
 
 		local vaCannonTarget = self.vaAimTargetCannon
 		if isvector( vaCannonTarget ) then
@@ -358,6 +352,7 @@ function ENT:Think( ... )
 			if IsValid( pEntity ) && self:UpdateMemory( pEntity ) == "Hostile" then self:FireKord() end
 		end
 
+		self:SetKordAngles( self:GetAngles() + Angle( aKordAngles[ 1 ], aKordAngles[ 2 ] ) )
 		self:ManipulateBoneAngles( iBoneID, Angle( aKordAngles[ 2 ], 0, aKordAngles[ 1 ] ) )
 	end
 
@@ -380,7 +375,7 @@ function ENT:CanFireCannon( pEnemy, pTrueEnemy, MyTable )
 	local vPos, aAngles = self:GetBonePosition( iBoneID )
 
 	// TODO: Implement CanAttackCustomRadius
-	return MyTable.CanAttackCustom( self, pEnemy, pTrueEnemy, MyTable, nil, aAngles:Up(), vPos + aAngles:Up() * 73 - aAngles:Right() * -5, .12, .12 )
+	return MyTable.CanAttackCustom( self, pEnemy, pTrueEnemy, MyTable, nil, aAngles:Up(), vPos + aAngles:Up() * 73 + aAngles:Right() * 5, .12, .12 )
 end
 
 function ENT:OnRemove()

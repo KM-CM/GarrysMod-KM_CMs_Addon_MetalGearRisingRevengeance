@@ -159,6 +159,13 @@ sound.Add {
 }
 
 function ENT:GetMuzzleFlashPosition( sMuzzleFlash )
+	if sMuzzleFlash == "UnmannedGearGRAD76MMMuzzleFlash" then
+		local iBoneID = self:LookupBone "bone010"
+		if !iBoneID then return vector_origin end
+		local vPos, aAngles = self:GetBonePosition( iBoneID )
+		return vPos + aAngles:Up() * 73 + aAngles:Right() * 5
+	end
+
 	local iBoneID = self:LookupBone "bone056"
 	if !iBoneID then return vector_origin end
 	local vPos, aAngles = self:GetBonePosition( iBoneID )
@@ -166,15 +173,20 @@ function ENT:GetMuzzleFlashPosition( sMuzzleFlash )
 end
 
 function ENT:GetMuzzleFlashAngles( sMuzzleFlash )
-	local iBoneID = self:LookupBone "bone055"
-	if !iBoneID then return angle_zero end
-	local _, aAngles = self:GetBonePosition( iBoneID )
-	return aAngles:Up():Angle()
+	if sMuzzleFlash == "UnmannedGearGRAD76MMMuzzleFlash" then
+		local iBoneID = self:LookupBone "bone010"
+		if !iBoneID then return angle_zero end
+		local _, aAngles = self:GetBonePosition( iBoneID )
+		return aAngles:Up():Angle()
+	end
+
+	return self:GetKordAngles()
 end
 
 function ENT:SetupDataTables()
 	self:NetworkVar( "Bool", "IsSliding" )
 	self:NetworkVar( "Float", "SlideStrength" )
+	self:NetworkVar( "Angle", "KordAngles" )
 end
 
 if SERVER then
