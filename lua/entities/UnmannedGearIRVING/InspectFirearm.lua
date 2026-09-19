@@ -109,8 +109,7 @@ RegisterSchedule( "GekkoStompFirearm", { Execute = function( self, pSchedule, My
 	if !pSchedule.bLowed then
 		pSchedule.bLowed = true
 
-		MyTable.PrioritySentence( self, { sSound = "GekkoTaunt" }, MyTable )
-		MyTable.HandleSentences( self, MyTable )
+		MyTable.LowIfAvailable( self, MyTable )
 	end
 
 	local f = MyTable.GetStompDamageRadius( self ) * .75

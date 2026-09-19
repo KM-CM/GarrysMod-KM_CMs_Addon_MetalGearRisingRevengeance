@@ -15,7 +15,11 @@ ENT.bCannotCarryWeapons = true
 ENT.flVisionYaw = 120
 ENT.flVisionPitch = 80
 
+ENT.flGravityMultiplierInAir = 3
+
+ENT.m_flIdleSequenceWeight = .5
 ENT.m_sIdleSequence = "idle"
+//	ENT.m_sIdle2Sequence = "ref"
 
 local util_ScreenShake = util.ScreenShake
 
@@ -28,30 +32,44 @@ local function fChargeOStep( self, _, flWeight )
 	util_ScreenShake( self:GetPos() + self:OBBCenter(), 6, 1, 1, 2048, true )
 end
 
+ENT.flWalkTime = 0
+
+ENT.flNextLow = 0
+function ENT:LowIfAvailable( MyTable )
+	if CurTime() <= MyTable.flNextLow then return end
+
+	MyTable.flNextLow = CurTime() + 1
+
+	MyTable.EmitSentence( self, { sSound = "GekkoTaunt" }, MyTable )
+	MyTable.HandleSentences( self, MyTable )
+
+	return true
+end
+
 ENT.tSequenceEvents = {
-	walk = {
-		[ .411 ] = function( self, _, flWeight )
-			if flWeight <= .75 then return end
-			self:EmitSound "GekkoStepTiptoes"
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
-		end,
-
-		[ .911 ] = function( self, _, flWeight )
-			if flWeight <= .75 then return end
-			self:EmitSound "GekkoStepTiptoes"
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
-		end
-	},
-
 	run = {
 		[ .2 ] = function( self, _, flWeight )
 			if flWeight <= .75 then return end
+
+			if CurTime() < self.flWalkTime then
+				self:EmitSound "GekkoStepTiptoes"
+				util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+				return
+			end
+
 			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
 		end,
 
 		[ .54 ] = function( self, _, flWeight )
 			if flWeight <= .75 then return end
+
+			if CurTime() < self.flWalkTime then
+				self:EmitSound "GekkoStepTiptoes"
+				util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+				return
+			end
+
 			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
 		end
@@ -90,7 +108,8 @@ ENT.tSequenceEvents = {
 
 	charge_start = {
 		[ .2 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end,
-		[ .54 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end
+		[ .4 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end,
+		[ .74 ] = function( self, _, flWeight ) fChargeOStep( self, _, flWeight ) end
 	},
 
 	charge_end = {
@@ -185,17 +204,24 @@ function ENT:OnLandOnGround()
 	self.fCallMeInRunBehaviour = function( self, MyTable )
 		if !MyTable.bCharging then
 			MyTable.AnimationSystemHalt( self, MyTable )
-			MyTable.PlaySequenceAndWait( self, "land", math.Rand( .75, 1.5 ) )
+			MyTable.PlaySequenceAndWait( self, "land", math.Rand( .75, 1.25 ) )
 		end
 		return true
 	end
 end
 
-function ENT:PostJumpInternal() self:EmitSound "GekkoJump" end
+function ENT:PostJumpInternal()
+	local pData = EffectData()
+	pData:SetEntity( self )
+	pData:SetOrigin( self:GetPos() )
+	util.Effect( "GekkoJump", pData )
 
-local HEAD_BONE = "bone003"
+	self:EmitSound "GekkoJump"
+end
 
-ENT.flHeadStiffness = 8
+local HEAD_BONE = "bone006"
+
+ENT.flHeadStiffness = 6
 ENT.flHeadDamping = -4
 
 ENT.m_flTargetChirpVolume = 0
@@ -234,6 +260,56 @@ function ENT:OnRemove()
 	BaseClass.OnRemove( self )
 end
 
+ENT.flNextMachineGunShot = 0
+
+local MACHINEGUN_DELAY = .1
+
+function ENT:FireMachineGun()
+	if CurTime() <= self.flNextMachineGunShot then return end
+	self.flNextMachineGunShot = CurTime() + MACHINEGUN_DELAY
+
+	local iBoneID = self:LookupBone( HEAD_BONE )
+	if !iBoneID then return end
+
+	local vPos, aAngles = self:GetBonePosition( iBoneID )
+
+	local dShoot = aAngles:Up()
+	local vShoot = vPos + aAngles:Up() * 47 + aAngles:Right() * -12 + aAngles:Forward() * 2.7
+
+	local pEffectData = EffectData()
+
+	pEffectData:SetEntity( self )
+	pEffectData:SetMaterialIndex( 0 )
+
+	pEffectData:SetOrigin( vShoot )
+	pEffectData:SetStart( vShoot )
+	pEffectData:SetNormal( dShoot )
+	pEffectData:SetAngles( dShoot:Angle() )
+	pEffectData:SetMagnitude( 1 / ( MACHINEGUN_DELAY * math.Rand( .75, 1.25 ) ) )
+
+	util.Effect( "MuzzleFlashGeneric", pEffectData )
+
+	self:FireBullets {
+		Attacker = self,
+		Src = vShoot,
+		Dir = dShoot,
+		Tracer = 1,
+		Spread = Vector( .25 / 90, .25 / 90 ),
+		Damage = 40,
+		Force = 1
+	}
+
+	self:EmitSound "GekkoMachineGunFire"
+end
+
+function ENT:CanFireMachineGun( pEnemy, pTrueEnemy, MyTable )
+	local vPos, aAngles = self:GetBonePosition( self:LookupBone( HEAD_BONE ) )
+
+	return MyTable.CanAttackCustom( self, pEnemy, pTrueEnemy, MyTable, nil, aAngles:Up(), vPos + aAngles:Up() * 47 + aAngles:Right() * -12 + aAngles:Forward() * 2.7, .25, .25 )
+end
+
+ENT.m_flDontTurnHeadTime = 0
+
 function ENT:HandleTurning( MyTable )
 	local flFrameTime = BaseClass.HandleTurning( self, MyTable )
 
@@ -241,34 +317,54 @@ function ENT:HandleTurning( MyTable )
 	if iBoneID && self.aHeadAngles then
 		local vPos, aAngles = self:GetBonePosition( iBoneID )
 
-		local aManip = self:GetManipulateBoneAngles( iBoneID )
+		local aShoot = aAngles:Up():Angle()
+		self:SetMachineGunAngles( aShoot )
 
-		local aDesAim
+		local aHeadAngles = self.aHeadAngles
+
+		local vDelta = Vector()
 
 		local vaHeadTarget = self.vaAimTargetPose
 		if isvector( vaHeadTarget ) then
-			aDesAim = ( vaHeadTarget - ( vPos + aAngles:Up() * 64 ) ):Angle()
+			vaHeadTarget = ( vaHeadTarget - ( vPos + aAngles:Up() * 47 + aAngles:Right() * -12 + aAngles:Forward() * 2.7 ) ):Angle()
+
+			local flPitch = math.AngleDifference( aShoot[ 1 ], aHeadAngles[ 1 ] )
+			if CurTime() <= self.m_flDontTurnHeadTime then
+				vaHeadTarget[ 1 ] = flPitch
+			else
+				local flDiff = math.AngleDifference( vaHeadTarget[ 1 ], flPitch )
+				if flDiff < -50 then vaHeadTarget[ 1 ] = flPitch - 50
+				elseif flDiff > 50 then vaHeadTarget[ 1 ] = flPitch + 50 end
+			end
+
+			vDelta[ 1 ] = math.AngleDifference( vaHeadTarget[ 1 ], aShoot[ 1 ] )
+			vDelta[ 2 ] = math.AngleDifference( vaHeadTarget[ 2 ], aShoot[ 2 ] )
 		elseif isangle( vaHeadTarget ) then
-			aDesAim = vaHeadTarget
-		else aDesAim = self:GetAngles() end
+			local flPitch = math.AngleDifference( aShoot[ 1 ], aHeadAngles[ 1 ] )
+			if CurTime() <= self.m_flDontTurnHeadTime then
+				vaHeadTarget[ 1 ] = flPitch
+			else
+				local flDiff = math.AngleDifference( vaHeadTarget[ 1 ], flPitch )
+				if flDiff < -50 then vaHeadTarget[ 1 ] = flPitch - 50
+				elseif flDiff > 50 then vaHeadTarget[ 1 ] = flPitch + 50 end
+			end
 
-		local aCurrentAngles = self:GetAngles()
-		aDesAim[ 1 ] = aCurrentAngles[ 1 ] + math.Clamp( math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ), -90, 90 )
-
-		local aHeadAngles = self.aHeadAngles
-		aCurrentAngles:Add( aHeadAngles )
+			vDelta[ 1 ] = math.AngleDifference( vaHeadTarget[ 1 ], aShoot[ 1 ] )
+			vDelta[ 2 ] = math.AngleDifference( vaHeadTarget[ 2 ], aShoot[ 2 ] )
+		else
+			local aAngles = self:GetAngles()
+			vDelta[ 1 ] = math.AngleDifference( aAngles[ 1 ], aShoot[ 1 ] )
+			vDelta[ 2 ] = math.AngleDifference( aAngles[ 2 ], aShoot[ 2 ] )
+		end
 
 		local vHeadVelocity = self.vHeadVelocity
-		vHeadVelocity:Add( Vector(
-			math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ),
-			math.AngleDifference( aDesAim[ 2 ], aCurrentAngles[ 2 ] )
-		) * self.flHeadStiffness * flFrameTime )
+		vHeadVelocity:Add( vDelta * self.flHeadStiffness * flFrameTime )
 		vHeadVelocity:Mul( math.exp( self.flHeadDamping * flFrameTime ) )
 
 		aHeadAngles[ 1 ] = aHeadAngles[ 1 ] + vHeadVelocity[ 1 ] * flFrameTime
 		aHeadAngles[ 2 ] = aHeadAngles[ 2 ] + vHeadVelocity[ 2 ] * flFrameTime
 
-		self:ManipulateBoneAngles( iBoneID, Angle( aHeadAngles[ 2 ], 0, aHeadAngles[ 1 ] - 22.5 ) )
+		self:ManipulateBoneAngles( iBoneID, Angle( aHeadAngles[ 2 ], 0, aHeadAngles[ 1 ] ) )
 	end
 end
 
@@ -277,13 +373,16 @@ function ENT:OnKilled( ... )
 	self:Remove()
 end
 
-ENT.flChargeSpeed = 820
-ENT.flTopSpeed = 428
+ENT.flTopSpeed = 512
 ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 96
 ENT.flPowerWalkSpeed = 160
 
-ENT.flJumpHeight = 2048
+ENT.flChargeSpeed = 820
+
+ENT.flJumpHeight = 1024
+
+ENT.flSpeedUpAnimationsTime = 0
 
 function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	local pLocomotion = self.loco
@@ -293,18 +392,24 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	pLocomotion:SetDeceleration( f )
 	pLocomotion:SetJumpHeight( self.flJumpHeight )
 	local f = GetVelocity( self ):Length()
-	if f <= 12 || !self:IsOnGround() then self:PromoteSequence( self.m_sIdleSequence )
+	local flMultiplier = 1
+	if CurTime() <= self.flSpeedUpAnimationsTime then
+		flMultiplier = 1.5
+	end
+	if f <= 12 || !self:IsOnGround() then
 	elseif f <= ( self.flWalkSpeed * 1.1 ) then
-		self:PromoteSequence( "walk", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) )
+		self.flWalkTime = CurTime() + .1
+		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 3 * flMultiplier, 1 / 3 )
 	elseif f <= ( self.flPowerWalkSpeed * 1.1 ) then
-		self:PromoteSequence( "walk", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) )
+		self.flWalkTime = CurTime() + .1
+		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 3 * flMultiplier, 1 / 3 )
 	else
-		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" )  )
+		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 1.2 * flMultiplier, 1 / 1.2 )
 	end
 	self:GrountMovement( pPath, flSpeed, tFilter )
 end
 
-function ENT:Stand() self.loco:SetJumpHeight( 1640 ) BaseClass.Stand( self ) end
+function ENT:Stand() self.loco:SetJumpHeight( self.flJumpHeight ) BaseClass.Stand( self ) end
 
 // After playing some MGR, this is the animation that plays (I think)
 // where the Gekko stomps, gets its foot stuck in the ground,
@@ -379,15 +484,20 @@ end } )
 ENT.flLegStatus = 1
 
 function ENT:OnTakeDamage( dDamage )
-	dDamage:ScaleDamage( math.Remap( dDamage:GetDamage(), 0, self:Health(), .1, 1 / 3 ) )
+	dDamage:ScaleDamage( math.Remap( dDamage:GetDamage(), 0, self:Health(), .1, 1 ) )
+
 	local flHealth = Lerp( .25, self:Health(), self:GetMaxHealth() )
+
 	if dDamage:IsDamageType( DMG_CLUB ) then flHealth = flHealth * 24 end
+
 	local f = math.Clamp( self.flLegStatus - dDamage:GetDamage() / flHealth * 4, 0, 1 )
 	self.flLegStatus = f
+
 	local pSchedule = self.Schedule
 	if !( pSchedule && pSchedule.m_sName == "GekkoBrainMachineInterfaceError" ) then
 		if self.flLegStatus <= math.Rand( 0, dDamage:GetDamage() / flHealth * 100 ) then self:SetSchedule "GekkoBrainMachineInterfaceError" end
 	end
+
 	return BaseClass.OnTakeDamage( self, dDamage )
 end
 
@@ -397,9 +507,20 @@ function ENT:GekkoChirpControllerSet( flVolume ) self.m_flTargetChirpVolume = fl
 // Abrupt speaker stop
 function ENT:GekkoChirpControllerCombat( MyTable ) ( MyTable || self ).m_flTargetChirpVolume = 0 end
 
+ENT.m_flRandomTargetChirpVolumeCurrent = 1
+ENT.m_flRandomTargetChirpVolumeTarget = 1
+
 // Calm raise to pretend to be a swarm of cicadas
 function ENT:GekkoChirpControllerRaise( MyTable, flFrameTime )
-	( MyTable || self ).m_flTargetChirpVolume = math.Approach( ( MyTable || self ).m_flTargetChirpVolume, 1, flFrameTime )
+	MyTable = MyTable || self
+
+	MyTable.m_flRandomTargetChirpVolumeCurrent = math.Approach( MyTable.m_flRandomTargetChirpVolumeCurrent, MyTable.m_flRandomTargetChirpVolumeTarget, .1 * flFrameTime )
+
+	if MyTable.m_flRandomTargetChirpVolumeCurrent == MyTable.m_flRandomTargetChirpVolumeTarget then
+		MyTable.m_flRandomTargetChirpVolumeTarget = math.Rand( .2, 1 )
+	end
+
+	MyTable.m_flTargetChirpVolume = math.Approach( MyTable.m_flTargetChirpVolume, MyTable.m_flRandomTargetChirpVolumeCurrent, flFrameTime )
 end
 
 // Calm stop to cut out while still pretending to be a swarm of cicadas

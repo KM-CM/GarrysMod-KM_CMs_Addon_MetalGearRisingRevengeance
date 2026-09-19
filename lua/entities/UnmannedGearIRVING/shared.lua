@@ -43,7 +43,7 @@ sound.Add {
 	name = "GekkoJump",
 	channel = CHAN_STATIC,
 	volume = 1,
-	level = 130,
+	level = 100,
 	pitch = { 90, 110 },
 	sound = "^Gekko/Jump.wav"
 }
@@ -52,7 +52,7 @@ sound.Add {
 	name = "GekkoLand",
 	channel = CHAN_STATIC,
 	volume = 1,
-	level = 140,
+	level = 110,
 	pitch = { 90, 110 },
 	sound = "^Gekko/Jump.wav"
 }
@@ -178,5 +178,26 @@ sound.Add {
 	level = 120,
 	sound = "^Gekko/ChirpLoop.wav"
 }
+
+sound.Add {
+	name = "GekkoMachineGunFire",
+	channel = CHAN_WEAPON,
+	level = 150,
+	pitch = { 90, 110 },
+	sound = "weapons/smg1/smg1_fire1.wav"
+}
+
+function ENT:GetMuzzleFlashPosition( sMuzzleFlash )
+	local vPos, aAngles = self:GetBonePosition( self:LookupBone "bone006" )
+	return vPos + aAngles:Up() * 47 + aAngles:Right() * -12 + aAngles:Forward() * 2.7
+end
+
+function ENT:GetMuzzleFlashAngles( sMuzzleFlash )
+	return self:GetMachineGunAngles()
+end
+
+function ENT:SetupDataTables()
+	self:NetworkVar( "Angle", "MachineGunAngles" )
+end
 
 if SERVER then include "Server.lua" end

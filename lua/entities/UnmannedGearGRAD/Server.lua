@@ -6,6 +6,7 @@ DEFINE_BASECLASS "BaseActor"
 if !CLASS_DESPERADO_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_WORLD_MARSHAL" end
 ENT.iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
+local MACHINEGUN_BASE_BONE = "bone055"
 local MACHINEGUN_BONE = "bone056"
 local AUTOCANNON_BONE = "bone010"
 
@@ -87,14 +88,11 @@ ENT.tSequenceEvents = {
 	}
 }
 
-function ENT:CanTransformIntoBunker() return self:HasSkill "CanTransformIntoBunker" end
-function ENT:CanTuck() return self:HasSkill "CanTuck" end
-
 function ENT:GrantDefaultSkills()
 	local MyTable = BaseClass.GrantDefaultSkills( self )
 	if !MyTable then return end
-	MyTable.GrantSkill( self, "UnmannedGearGRAD.CanTransformIntoBunker", MyTable )
-	MyTable.GrantSkill( self, "UnmannedGearGRAD.CanAimPose", MyTable )
+	MyTable.GrantSkill( self, "UnmannedGearGRAD.TransformIntoBunker", MyTable )
+	MyTable.GrantSkill( self, "UnmannedGearGRAD.AimPose", MyTable )
 	MyTable.GrantSkill( self, "UnmannedGearGRAD.Kord.TactileLaser", MyTable )
 end
 
@@ -310,8 +308,9 @@ function ENT:Think( ... )
 		self:ManipulateBoneAngles( iBoneID, Angle( aCannonAngles[ 2 ], 0, aCannonAngles[ 1 ] ) )
 	end
 
-	local iBoneID = self:LookupBone( MACHINEGUN_BONE )
-	if iBoneID && self.aKordAngles then
+	if self.aKordAngles then
+		local iBoneID = self:LookupBone( MACHINEGUN_BONE )
+
 		local vPos, aAngles = self:GetBonePosition( iBoneID )
 
 		local aDesAim
@@ -353,7 +352,9 @@ function ENT:Think( ... )
 		end
 
 		self:SetKordAngles( self:GetAngles() + Angle( aKordAngles[ 1 ], aKordAngles[ 2 ] ) )
-		self:ManipulateBoneAngles( iBoneID, Angle( aKordAngles[ 2 ], 0, aKordAngles[ 1 ] ) )
+
+		self:ManipulateBoneAngles( self:LookupBone( MACHINEGUN_BASE_BONE ), Angle( aKordAngles[ 2 ] ) )
+		self:ManipulateBoneAngles( iBoneID, Angle( 0, 0, aKordAngles[ 1 ] ) )
 	end
 
 	return BaseClass.Think( self, ... )
