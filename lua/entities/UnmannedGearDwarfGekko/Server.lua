@@ -1,3 +1,5 @@
+DEFINE_BASECLASS "BaseActor"
+
 function ENT:Initialize()
 	self:SetModel "models/dughoo/mgrr2025/tripod3.mdl"
 	// they get hp, cuz they robot
