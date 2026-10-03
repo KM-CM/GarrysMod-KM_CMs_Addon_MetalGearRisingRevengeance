@@ -1,0 +1,24 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/dughoo/khamsin/em0130049"
+	"$bumpmap" "mgr/dughoo/khamsin/em0130050"
+	"$nodecal" 1
+	"$model" "1"
+    "$envmap"                   env_cubemap
+	"$ambientocclusion"         "1"
+	"$halflambert"              "1"
+    "$phong"                    "1"
+    "$phongboost"               ".3.25"
+    "$phongexponent"            "13"
+	"$phongfresnelranges"	"[0.5 6 10]"
+    "$phongalbedotint"          "1"
+    "$envmaptint"               "[.1 .1 .1]"
+	"$envmapsaturation" "0.02"
+	"$envmapcontrast" "0.01"
+ 	"$envmapFresnel" "1"
+    "$normalmapalphaenvmapmask" "1"
+    "$blendtintbybasealpha"     "1"
+	$rimlight               1
+	$rimlightexponent       2
+	$rimlightboost          .2
+}

@@ -1,0 +1,13 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/dughoo/khamsin/em0130060"
+	"$bumpmap" "mgr/dughoo/khamsin/em0130062"
+	"$translucent" 1
+	"$nodecal" 1
+    "$phong"                    "1"
+    "$phongboost"               ".01"
+    "$phongexponent"            "5"
+	"$phongfresnelranges"	"[0.5 6 10]"
+    "$phongalbedotint"          "1"
+
+}

@@ -1,0 +1,7 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/dughoo/khamsin/em0130018"
+	 
+	"$translucent" 1
+	"$nodecal" 1
+}

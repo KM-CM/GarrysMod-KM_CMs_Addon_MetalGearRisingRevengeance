@@ -1,0 +1,7 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/dughoo/khamsin/em0130063"
+	"$bumpmap" "mgr/dughoo/khamsin/em0130062"
+	"$alphatest" 1
+	"$nodecal" 1
+}
