@@ -1,7 +1,7 @@
 "VertexlitGeneric"
 {
-	"$basetexture" "mgr/dughoo/grad/desperado/em0080000"
-	"$bumpmap" "mgr/dughoo/grad/desperado/em0080001"
+	"$basetexture" "mgr/dughoo/grad/regular/em0081006"
+	"$bumpmap" "mgr/dughoo/grad/desperado/em0080007"
 	"$nodecal" 1
     "$envmap"                   "monsoon/linux55/cube"
 	"$ambientocclusion"         "1"
@@ -12,9 +12,9 @@
 	"$phongfresnelranges"	"[0.5 6 10]"
     "$phongalbedotint"          "1"
     "$envmaptint"               "[.001 .001 .001]"
-	"$envmapsaturation" "0.1"
-	"$envmapcontrast" "0.1"
- 	"$envmapFresnel" ".1"
+	"$envmapsaturation" "0.02"
+	"$envmapcontrast" "0.01"
+ 	 	"$envmapFresnel" ".1"
     "$normalmapalphaenvmapmask" "1"
     "$blendtintbybasealpha"     "1"
 	$rimlight               1
