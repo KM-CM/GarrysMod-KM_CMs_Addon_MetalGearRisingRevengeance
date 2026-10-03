@@ -1,0 +1,23 @@
+"VertexLitGeneric"
+{
+                  "$basetexture" "mg_ray/bayomat_001_ois00_xbceX"
+                   "$bumpmap" "mg_ray/bayomat_001_ois00_xbceX_n"
+
+	"$halflambert"	1
+	"$nocull" 1
+	"$nodecal" 0
+	"$alphatest" 0
+	"$translucent" 0
+                 $color2 "[ 4 4 4 ]"  
+
+	$phong			1
+	$phongexponent		200			
+	$phongboost		200
+	$phongfresnelranges "[.07 .07.07]"
+
+	$rimlight               1
+	$rimlightexponent       15
+	$rimlightboost          1
+
+
+}

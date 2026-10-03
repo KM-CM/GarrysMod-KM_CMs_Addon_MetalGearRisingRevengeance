@@ -1,0 +1,16 @@
+"VertexLitGeneric" {
+	"$basetexture" "mg_ray/bayomat_000_ois00_xbceX"
+	"$bumpmap" "mg_ray/bayomat_000_ois00_xbceX_n"
+
+	"$nocull" "1"
+	"$color2" "[ 1 1 1 ]"  
+
+	"$phong" "1"
+	"$phongexponent" "15"			
+	"$phongboost" "3"
+	"$phongfresnelranges" "[ .2 .5 1 ]"
+
+	"$normalmapalphaenvmapmask" "1"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[ .05 .05 .05 ]"
+}

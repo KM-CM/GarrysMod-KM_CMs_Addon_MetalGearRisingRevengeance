@@ -1,0 +1,19 @@
+"UnlitGeneric"
+{
+	"$basetexture" "mg_ray/ef_hurricane"
+	"$additive" 1
+               $nocull 1
+              $Nolight 1
+             $color2 "[10 5 2]"
+Proxies 
+	{
+		Sine
+		{
+			resultVar	$alpha 
+			sineperiod	1
+			sinemin		4
+			sinemax		4
+		}
+	}
+                
+}
