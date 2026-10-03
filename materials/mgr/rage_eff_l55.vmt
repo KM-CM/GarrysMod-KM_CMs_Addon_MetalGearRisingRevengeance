@@ -1,0 +1,6 @@
+"UnlitGeneric" {
+	"$basetexture" "mgr/rage_eff_l55"
+	"$vertexcolor" "1"
+	"$vertexalpha" "1"
+	"$translucent" "1"
+}
