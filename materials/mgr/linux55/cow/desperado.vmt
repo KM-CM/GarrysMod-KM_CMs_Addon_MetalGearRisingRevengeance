@@ -1,0 +1,6 @@
+"VertexLitGeneric" {
+	// This is the barcode on its head, as if legs wasn't enough.
+	// Why. the. fuck. is there a barcode on its head?
+	"$basetexture" "mgr/linux55/cow/qr_d"
+	"$translucent" "1"
+}
