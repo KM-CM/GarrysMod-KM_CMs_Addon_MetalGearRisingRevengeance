@@ -1,0 +1,28 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "monsoon/linux55/pink"
+	"$bumpmap" "monsoon/linux55/wep_n"
+
+	"$model" "1"
+	"$phong" "1"
+	"$phongexponent" "120"
+	"$phongboost" "5"
+	"$phongalbedotint" "1"
+	"$phongtint" "[1 .95 .95]"
+	"$phongfresnelranges"	"[0.5 6 10]"
+"$rimlight" "1"
+"$rimlightexponent" "47"	
+"$rimlightboost" "3.45"
+
+	"$basetexturealphaenvmapmask" 1
+	"$envmap" "monsoon/linux55/cube"
+    "$envmaptint"               "[.0005 .0005 .0005]"
+	"$envmapsaturation" "0.02"
+	"$envmapcontrast" "0.01"
+ 	"$envmapFresnel" "1"
+"$phongexponenttexture"     "monsoon/linux55/exponent"
+
+}
+
+
+
