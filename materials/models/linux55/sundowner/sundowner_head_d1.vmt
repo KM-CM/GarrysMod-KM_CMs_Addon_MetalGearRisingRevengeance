@@ -1,0 +1,9 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/linux55/sundowner/Sundowner_Head_D"
+	"$bumpmap" "models/linux55/sundowner/Sundowner_Head_n2"
+	"$phong" "1"
+	"$phongexponent" "5"
+	"$phongboost"	"1"
+	"$phongfresnelranges"	"[.5 3 48]"
+}

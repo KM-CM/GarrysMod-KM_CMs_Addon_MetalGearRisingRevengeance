@@ -1,0 +1,19 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/linux55/sundowner/scars"
+	"$bumpmap" "models/linux55/sundowner/scars_m"
+	"$alphatest" 1
+	"$model" "1"
+	"$phong" "1"
+	"$phongexponent" 20
+	"$phongboost" "1.5"
+	"$phongfresnelranges"	"[ .53 .72 20]"
+	"$PhongAlbedoTint" "1"
+
+
+	"$rimlight" "1"						
+	"$rimlightexponent" "255"				
+	"$rimlightboost" ".3"
+	"$rimmask" "1"
+$halflambert 1
+}

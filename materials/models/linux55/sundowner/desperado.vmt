@@ -1,0 +1,6 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/linux55/sundowner/desperado"
+	"$alphatest" 1
+	"$nocull" 1
+}

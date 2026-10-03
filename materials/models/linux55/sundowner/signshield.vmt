@@ -1,0 +1,5 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/thedoomguysfm/metalgearrising/sundowner/shields/signshield"
+	"$translucent" 1
+}

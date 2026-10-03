@@ -1,0 +1,6 @@
+"VertexLitGeneric"
+{
+	"$basetexture"                "models\linux55/sundowner/eyeball_r" 	"$AmbientOcclTexture" "models\ninja/sundowner/eye_ao"				  // Ambient occlusion in RGB, A unused
+
+
+}
