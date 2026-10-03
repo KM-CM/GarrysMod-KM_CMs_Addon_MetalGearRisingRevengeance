@@ -1,0 +1,8 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/dughoo/raiden/prologue/pl0100033"
+	"$nodecal" 1
+$alphatest 1
+	"$translucent" 1
+$allowalphatocoverage 1
+}
