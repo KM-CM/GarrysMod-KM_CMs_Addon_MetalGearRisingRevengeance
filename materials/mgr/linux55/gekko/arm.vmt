@@ -1,0 +1,15 @@
+"VertexLitGeneric" {
+	"$basetexture" "mgr/linux55/gekko/arm"
+	"$bumpmap" "mgr/linux55/gekko/arm_n"
+
+	"$phong" "1"
+	"$phongexponent" "75"
+	"$phongboost" "16"
+	"$phongfresnelranges" "[ .25 .6 1 ]"
+	"$phongalbedotint" "1"
+
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[ .18 .2 .24 ]"
+	"$envmapfresnel" "1"
+	"$normalmapalphaenvmapmask" "1"
+}

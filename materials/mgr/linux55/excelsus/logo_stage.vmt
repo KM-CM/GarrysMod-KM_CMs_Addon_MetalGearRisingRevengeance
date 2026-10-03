@@ -1,0 +1,8 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/excelsus/logo_stage"
+	"$alphatest" 1
+	"$nocull" 1
+//$nodecal "1" 
+	"$nodecal" 1
+}

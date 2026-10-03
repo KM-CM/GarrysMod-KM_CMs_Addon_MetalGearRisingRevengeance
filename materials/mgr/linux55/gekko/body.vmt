@@ -1,0 +1,37 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/gekko/gekko_body"
+	"$bumpmap" "mgr/linux55/gekko/body_n"
+	"$model" "1"
+
+	"$emissiveBlendEnabled" "1"
+	"$emissiveBlendTexture" "dev/null" 
+	"$emissiveBlendBaseTexture" "mgr/linux55/gekko/eye"
+	"$emissiveBlendFlowTexture" "dev/null"
+	"$emissiveBlendTint" "[1 1 1]"
+	"$emissiveBlendStrength" "2"
+	"$emissiveBlendScrollVector" "[1.0]"
+//$nodecal "1" 
+    "$envmap"                   "monsoon/linux55/cube"
+
+
+	"$ambientocclusion"         "1"
+	"$halflambert"              "1"
+
+    "$phong"                    "1"
+    "$phongboost"               ".3.25"
+    "$phongexponent"            "13"
+	"$phongfresnelranges"	"[0.5 6 10]"
+    "$phongalbedotint"          "1"
+    "$envmaptint"               "[.0035 .0035 .0035]"
+	"$envmapsaturation" "0.02"
+	"$envmapcontrast" "0.01"
+ 	"$envmapFresnel" "1"
+
+    "$normalmapalphaenvmapmask" "1"
+    "$blendtintbybasealpha"     "1"
+}
+
+
+
+

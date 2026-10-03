@@ -1,0 +1,7 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/hammerhead/eye"
+//$nodecal "1" 
+$translucent 1
+$selfillium 1
+}
