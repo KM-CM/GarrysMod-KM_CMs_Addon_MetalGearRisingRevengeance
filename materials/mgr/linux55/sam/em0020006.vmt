@@ -1,0 +1,17 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/sam/em0020006"
+	"$bumpmap" "mgr/linux55/sam/em0020005"
+$alphatest 1
+//$nodecal "1" 
+	"$nocull" 1
+	"$phong" "1"
+	"$phongexponent" "25"
+	"$phongboost" ".05"
+$phongfresnelranges "[1.3 .6 1]"
+"$rimlight" "1"
+"$rimlightexponent" "20"	
+"$rimlightboost" "0.5"
+
+
+}

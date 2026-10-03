@@ -1,0 +1,9 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/ray/tr"
+	"$alphatest" 1
+	"$nodecal" 1
+	"$translucent" 1
+//$nodecal "1" 
+}
+

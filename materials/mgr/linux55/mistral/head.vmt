@@ -1,0 +1,16 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/mistral/head"
+	"$bumpmap" "mgr/linux55/mistral/headn"
+	"$nocull" 1
+	"$model" "1"
+	"$ambientocclusion"         "1"
+	"$halflambert"              "1"
+//$nodecal "1" 
+    "$phong"                    "1"
+    "$phongboost"               ".11.25"
+    "$phongexponent"            "13"
+	"$phongfresnelranges"	"[0.5 6 10]"
+    "$phongalbedotint"          "1"
+}
+

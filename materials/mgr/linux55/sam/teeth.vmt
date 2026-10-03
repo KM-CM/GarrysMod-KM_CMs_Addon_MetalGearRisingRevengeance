@@ -1,0 +1,17 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/mistral/teeth"
+	"$bumpmap" "mgr/linux55/mistral/teethn"
+	"$nocull" 1
+
+//$nodecal "1" 
+	"$ambientocclusion"         "1"
+	"$halflambert"              "1"
+
+    "$phong"                    "1"
+    "$phongboost"               ".31.25"
+    "$phongexponent"            "13"
+	"$phongfresnelranges"	"[0.5 6 10]"
+    "$phongalbedotint"          "1"
+
+}

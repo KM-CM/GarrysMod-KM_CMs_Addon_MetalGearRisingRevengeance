@@ -1,0 +1,23 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/sam/sw"
+	"$bumpmap" "mgr/linux55/sam/sw_n"
+	"$nodecal" 1
+    "$envmap"                   "monsoon/linux55/cube"
+	"$ambientocclusion"         "1"
+	"$halflambert"              "1"
+    "$phong"                    "1"
+    "$phongboost"               "1"
+    "$phongexponent"            "13"
+	"$phongfresnelranges"	"[0.5 6 10]"
+    "$phongalbedotint"          "1"
+    "$envmaptint"               "[.01 .01 .01]"
+	"$envmapsaturation" "0.1"
+	"$envmapcontrast" "0.1"
+ 	"$envmapFresnel" ".1"
+    "$normalmapalphaenvmapmask" "1"
+    "$blendtintbybasealpha"     "1"
+	$rimlight               1
+	$rimlightexponent       2
+	$rimlightboost          .2
+}

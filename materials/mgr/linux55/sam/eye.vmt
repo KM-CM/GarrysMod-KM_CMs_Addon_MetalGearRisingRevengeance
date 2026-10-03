@@ -1,0 +1,28 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/sam/eye"
+	"$bumpmap" "mgr/linux55/sam/eye_n"
+	"$nocull" 1
+	"$model" "1"
+//$nodecal "1" 
+
+    "$envmap"                   "env_cubemap"
+
+
+	"$ambientocclusion"         "1"
+	"$halflambert"              "1"
+
+    "$phong"                    "1"
+    "$phongboost"               "0.1.25"
+    "$phongexponent"            "113"
+	"$phongfresnelranges"	"[0.5 6 10]"
+    "$phongalbedotint"          "1"
+    "$envmaptint"               "[.05 .05 .05]"
+	"$envmapsaturation" "0.02"
+	"$envmapcontrast" "0.01"
+ 	"$envmapFresnel" "1"
+
+    "$normalmapalphaenvmapmask" "1"
+    "$blendtintbybasealpha"     "1"
+}
+

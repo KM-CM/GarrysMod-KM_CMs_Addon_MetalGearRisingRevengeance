@@ -1,0 +1,8 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/sam/brovi"
+	"$bumpmap" "mgr/linux55/sam/brovi_n"
+	"$translucent" 1
+	"$nocull" 1
+//$nodecal "1" 
+}

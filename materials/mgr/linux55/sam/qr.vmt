@@ -1,0 +1,7 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/sam/qr"
+	"$translucent" 1
+//$nodecal "1" 
+	"$nocull" 1
+}

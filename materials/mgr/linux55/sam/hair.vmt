@@ -1,0 +1,12 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/sam/hair"
+	"$bumpmap" "mgr/linux55/sam/hair_n"
+	"$translucent" 1
+	"$phong" "1"
+$nocull 1
+	"$phongexponent" "14"
+	"$phongboost" ".1"
+$phongfresnelranges "[1.3 .6 1]"
+//$nodecal "1" 
+}

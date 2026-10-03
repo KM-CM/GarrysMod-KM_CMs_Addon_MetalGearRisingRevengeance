@@ -1,0 +1,8 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/sam/boroda"
+	"$bumpmap" "mgr/linux55/sam/boroda_n"
+	"$translucent" 1
+	"$nocull" 1
+//$nodecal "1" 
+}
