@@ -1,0 +1,9 @@
+"SpriteCard"
+{
+	"$basetexture" "particle\smoke_fluid\smoke_fluid"
+	"$vertexcolor" "1"
+	"$vertexalpha" "1"
+	"$translucent" "1"
+  	 $gammacolorread 1
+  	 $linearwrite 1
+}
