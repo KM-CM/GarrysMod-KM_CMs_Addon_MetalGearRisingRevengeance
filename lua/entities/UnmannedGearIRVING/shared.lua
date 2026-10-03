@@ -25,7 +25,6 @@ sound.Add {
 sound.Add {
 	name = "GekkoStompA",
 	channel = CHAN_STATIC,
-	volume = 1,
 	level = 120,
 	pitch = 100,
 	sound = "physics/concrete/concrete_break2.wav"
@@ -33,7 +32,6 @@ sound.Add {
 sound.Add {
 	name = "GekkoStompB",
 	channel = CHAN_STATIC,
-	volume = 1,
 	level = 120,
 	pitch = { 90, 100 },
 	sound = "physics/concrete/concrete_break3.wav"
@@ -42,8 +40,7 @@ sound.Add {
 sound.Add {
 	name = "GekkoJump",
 	channel = CHAN_STATIC,
-	volume = 1,
-	level = 100,
+	level = 90,
 	pitch = { 90, 110 },
 	sound = "^Gekko/Jump.wav"
 }
@@ -51,7 +48,6 @@ sound.Add {
 sound.Add {
 	name = "GekkoLand",
 	channel = CHAN_STATIC,
-	volume = 1,
 	level = 110,
 	pitch = { 90, 110 },
 	sound = "^Gekko/Jump.wav"
@@ -72,17 +68,18 @@ sound.Add {
 sound.Add {
 	name = "GekkoTaunt",
 	channel = CHAN_STATIC,
-	volume = 1,
 	level = 120,
 	pitch = { 90, 110 },
 	sound = {
-		"^Gekko/Taunt/1.wav",
-		"^Gekko/Taunt/2.wav",
-		"^Gekko/Taunt/3.wav",
-		"^Gekko/Taunt/4.wav",
-		"^Gekko/Taunt/5.wav",
-		"^Gekko/Taunt/6.wav",
-		"^Gekko/Taunt/7.wav"
+		"Gekko/Taunt1.wav",
+		"Gekko/Taunt2.wav",
+		"Gekko/Taunt3.wav",
+		"Gekko/Taunt4.wav",
+		"Gekko/Taunt5.wav",
+		"Gekko/Taunt6.wav",
+		"Gekko/Taunt7.wav",
+		"Gekko/Taunt8.wav",
+		"Gekko/Taunt9.wav"
 	}
 }
 
@@ -161,14 +158,13 @@ sound.Add {
 sound.Add {
 	name = "GekkoAck",
 	channel = CHAN_VOICE,
-	volume = 1,
 	level = 100,
 	pitch = { 75, 100 },
 	sound = {
-		"^Gekko/Ack/1.wav",
-		"^Gekko/Ack/2.wav",
-		"^Gekko/Ack/3.wav",
-		"^Gekko/Ack/4.wav"
+		"^Gekko/Ack1.wav",
+		"^Gekko/Ack2.wav",
+		"^Gekko/Ack3.wav",
+		"^Gekko/Ack4.wav"
 	}
 }
 

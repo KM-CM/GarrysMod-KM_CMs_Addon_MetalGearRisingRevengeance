@@ -11,10 +11,10 @@ sound.Add {
 	level = 110,
 	pitch = { 80, 120 },
 	sound = {
-		"dughoo_mgrr2025/grad/machinenoises1.wav",
-		"dughoo_mgrr2025/grad/machinenoises2.wav",
-		"dughoo_mgrr2025/grad/machinenoises3.wav",
-		"dughoo_mgrr2025/grad/machinenoises4.wav"
+		"GRAD/Shift1.wav",
+		"GRAD/Shift2.wav",
+		"GRAD/Shift3.wav",
+		"GRAD/Shift4.wav"
 	}
 }
 
@@ -24,11 +24,11 @@ sound.Add {
 	level = 110,
 	pitch = { 80, 120 },
 	sound = {
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe1.wav",
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe2.wav",
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe3.wav",
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe4.wav",
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe5.wav"
+		"GRAD/Metal1.wav",
+		"GRAD/Metal2.wav",
+		"GRAD/Metal3.wav",
+		"GRAD/Metal4.wav",
+		"GRAD/Metal5.wav"
 	}
 }
 
@@ -38,8 +38,8 @@ sound.Add {
 	level = 110,
 	pitch = { 80, 120 },
 	sound = {
-		"dughoo_mgrr2025/grad/shield_setupmaybe1.wav",
-		"dughoo_mgrr2025/grad/shield_setupmaybe2.wav"
+		"GRAD/ShieldSetup1.wav",
+		"GRAD/ShieldSetup2.wav"
 	}
 }
 
@@ -48,7 +48,7 @@ sound.Add {
 	channel = CHAN_STATIC,
 	level = 110,
 	pitch = { 80, 120 },
-	sound = "dughoo_mgrr2025/grad/chargeup.wav"
+	sound = "GRAD/Chargeup.wav"
 }
 
 sound.Add {
@@ -57,10 +57,10 @@ sound.Add {
 	level = 80,
 	pitch = { 80, 120 },
 	sound = {
-		"dughoo_mgrr2025/grad/machinenoises1.wav",
-		"dughoo_mgrr2025/grad/machinenoises2.wav",
-		"dughoo_mgrr2025/grad/machinenoises3.wav",
-		"dughoo_mgrr2025/grad/machinenoises4.wav"
+		"GRAD/Shift1.wav",
+		"GRAD/Shift2.wav",
+		"GRAD/Shift3.wav",
+		"GRAD/Shift4.wav"
 	}
 }
 
@@ -70,11 +70,11 @@ sound.Add {
 	level = 80,
 	pitch = { 80, 120 },
 	sound = {
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe1.wav",
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe2.wav",
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe3.wav",
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe4.wav",
-		"dughoo_mgrr2025/grad/metalbangsorstepsmaybe5.wav"
+		"GRAD/Metal1.wav",
+		"GRAD/Metal2.wav",
+		"GRAD/Metal3.wav",
+		"GRAD/Metal4.wav",
+		"GRAD/Metal5.wav"
 	}
 }
 
@@ -84,8 +84,8 @@ sound.Add {
 	level = 120,
 	pitch = { 70, 130 },
 	sound = {
-		"dughoo_mgrr2025/grad/bigwhoosh1.wav",
-		"dughoo_mgrr2025/grad/bigwhoosh2.wav"
+		"GRAD/Whoosh1.wav",
+		"GRAD/Whoosh2.wav"
 	}
 }
 
@@ -95,10 +95,10 @@ sound.Add {
 	level = 120,
 	pitch = { 70, 130 },
 	sound = {
-		"dughoo_mgrr2025/grad/shield_hit1.wav",
-		"dughoo_mgrr2025/grad/shield_hit2.wav",
-		"dughoo_mgrr2025/grad/shield_hit3.wav",
-		"dughoo_mgrr2025/grad/shield_hit4.wav"
+		"GRAD/ShieldHit1.wav",
+		"GRAD/ShieldHit2.wav",
+		"GRAD/ShieldHit3.wav",
+		"GRAD/ShieldHit4.wav"
 	}
 }
 
@@ -115,11 +115,11 @@ sound.Add {
 	level = 150,
 	pitch = { 90, 110 },
 	sound = {
-		"dughoo_mgrr2025/grad/gun_fire1.wav",
-		"dughoo_mgrr2025/grad/gun_fire2.wav",
-		"dughoo_mgrr2025/grad/gun_fire3.wav",
-		"dughoo_mgrr2025/grad/gun_fire4.wav",
-		"dughoo_mgrr2025/grad/gun_fire5.wav"
+		"GRAD/KordFire1.wav",
+		"GRAD/KordFire2.wav",
+		"GRAD/KordFire3.wav",
+		"GRAD/KordFire4.wav",
+		"GRAD/KordFire5.wav"
 	}
 }
 

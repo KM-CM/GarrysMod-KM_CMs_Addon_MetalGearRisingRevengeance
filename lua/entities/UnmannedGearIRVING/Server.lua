@@ -15,7 +15,7 @@ ENT.bCannotCarryWeapons = true
 ENT.flVisionYaw = 120
 ENT.flVisionPitch = 80
 
-ENT.flGravityMultiplierInAir = 3
+ENT.flGravityMultiplierInAir = 2
 
 ENT.m_flIdleSequenceWeight = .5
 ENT.m_sIdleSequence = "idle"
@@ -164,7 +164,7 @@ function ENT:Initialize()
 	self:SetHealth( 16384 )
 	self:SetMaxHealth( 16384 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
-	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 9072 ) end
+	if self:PhysicsInitShadow( false, false ) then self:GetPhysicsObject():SetMass( 4000 ) end
 	self.aHeadAngles = Angle()
 	self.vHeadVelocity = Vector()
 	BaseClass.Initialize( self )
@@ -376,6 +376,7 @@ end
 ENT.flTopSpeed = 512
 ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 96
+ENT.flFastWalkSpeed = 128
 ENT.flPowerWalkSpeed = 160
 
 ENT.flChargeSpeed = 820
@@ -397,12 +398,9 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 		flMultiplier = 1.5
 	end
 	if f <= 12 || !self:IsOnGround() then
-	elseif f <= ( self.flWalkSpeed * 1.1 ) then
-		self.flWalkTime = CurTime() + .1
-		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 3 * flMultiplier, 1 / 3 )
 	elseif f <= ( self.flPowerWalkSpeed * 1.1 ) then
 		self.flWalkTime = CurTime() + .1
-		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 3 * flMultiplier, 1 / 3 )
+		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 2.5 * flMultiplier, 1 / 2.5 )
 	else
 		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 1.2 * flMultiplier, 1 / 1.2 )
 	end

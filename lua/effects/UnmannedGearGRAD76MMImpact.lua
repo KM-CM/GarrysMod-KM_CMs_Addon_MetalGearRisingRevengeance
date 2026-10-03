@@ -23,7 +23,10 @@ function EFFECT:Init( pData )
 
 	pEmitter:Finish()
 
-	FX_EjectaCloud( vPos, 1600 )
+	FX_EjectaCloud {
+		vOrigin = vPos,
+		flMagnitude = 1600
+	}
 end
 
 function EFFECT:Render() end

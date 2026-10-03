@@ -1,11 +1,9 @@
 function EFFECT:Init( pData )
-	local pOwner = pData:GetEntity()
-
-	local vPos = pOwner:GetPos()
-
 	FX_EjectaCloud {
-		vOrigin = vPos,
-		flMagnitude = 1024
+		vOrigin = pData:GetOrigin(),
+		flMagnitude = 2048,
+		flStrengthOverride = 512,
+		vBaseVelocity = pData:GetStart()
 	}
 end
 
