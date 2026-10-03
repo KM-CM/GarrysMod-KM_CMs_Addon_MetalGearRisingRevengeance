@@ -4,3 +4,4 @@ Requires [KM_CM's Addon](https://github.com/GarrysMod-KM_CMs_Addon/Base) and [MG
 
 **NOTE: I removed all $noblood from MGR:R nextbot ``vmt``s. This should not, in fact, require MGR:R nextbots.
 Hopefully, I will upload all of those models and textures here sometime, so I can make 'em use cool shaders...**
+**NOTENOTE: Do not download for now. I'm in the process of doing exactly that. I'll remove this when I'm dun.**
