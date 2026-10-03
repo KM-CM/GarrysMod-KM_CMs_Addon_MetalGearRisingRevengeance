@@ -1,0 +1,6 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/dughoo/soldier_generic/em0140009"
+
+	"$alphatest" 1
+}
