@@ -1,25 +1,31 @@
 "VertexlitGeneric"
 {
-	"$basetexture" "mgr/linux55/wp0371000"
-	"$bumpmap" "mgr/linux55/wp0371001"
-    "$envmap"                   "monsoon/linux55/cube"
+	"$basetexture" "mgr/linux55/visor"
+	"$bumpmap" "mgr/linux55/visor_n"
+	"$nocull" 1
+	"$model" "1"
+
 //$nodecal "1" 
+    "$envmap"                   "env_cubemap"
+
 
 	"$ambientocclusion"         "1"
 	"$halflambert"              "1"
 
     "$phong"                    "1"
-    "$phongboost"               "3.25"
+    "$phongboost"               ".3.25"
     "$phongexponent"            "13"
 	"$phongfresnelranges"	"[0.5 6 10]"
     "$phongalbedotint"          "1"
-    "$envmaptint"               "[.005 .005 .005]"
+    "$envmaptint"               "[.0005 .0005 .0005]"
 	"$envmapsaturation" "0.02"
 	"$envmapcontrast" "0.01"
  	"$envmapFresnel" "1"
 
     "$normalmapalphaenvmapmask" "1"
-    "$blendtintbybasealpha"     "1"
+	$translucent 1
 }
+
+
 
 

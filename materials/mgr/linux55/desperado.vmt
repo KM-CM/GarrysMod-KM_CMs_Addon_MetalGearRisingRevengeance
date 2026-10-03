@@ -1,0 +1,7 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "mgr/linux55/desperado"
+	"$translucent" 1
+	"$nocull" 1
+//$nodecal "1" 
+}
