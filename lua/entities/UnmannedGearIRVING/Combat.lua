@@ -38,7 +38,7 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 
 		pSchedule.m_bInitialized = true
 
-		timer.Simple( math.Rand( 0, 2 / 3 ), function()
+		timer.Simple( math.Rand( 0, self:SequenceDuration( self:LookupSequence "charge_start" ) ), function()
 			if !IsValid( self ) then return end
 			MyTable.CustomMoo( self, MyTable )
 		end )
@@ -124,13 +124,15 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 
 	pLocomotion:SetVelocity( vTarget )
 
-	self:GrountMovement( pEnemyPath, flSpeed, tFilter )
+	self:GroundMovement( pEnemyPath, flSpeed, tFilter )
 
 	local tHit = pSchedule.tHit
 	if !tHit then
 		tHit = {}
 		pSchedule.tHit = tHit
 	end
+
+	local flVelocity = GetVelocity( self ):Length()
 
 	local f, flNextHitSound, bStop = self:BoundingRadius(), 0
 	if util.TraceHull( {
@@ -514,9 +516,9 @@ RegisterSchedule( "GekkoMelee", { Execute = function( self, pSchedule, MyTable )
 		return
 	end
 
-	pEnemyPath:MoveCursorToClosestPosition( self:GetPos() )
-
 	if !self:Visible( pEnemy ) then return end
+
+	pEnemyPath:MoveCursorToClosestPosition( self:GetPos() )
 
 	if math.random() <= .4 * MyTable.m_flFrameTime && MyTable.IsInterceptJumpLegal( self, pEnemy ) then
 		local bCustomMoo
@@ -587,7 +589,7 @@ RegisterSchedule( "GekkoMelee", { Execute = function( self, pSchedule, MyTable )
 
 	local flDistance = pEnemyPath:GetLength() - pEnemyPath:GetCursorPosition()
 
-	local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .8
+	local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .4
 
 	if flDistance <= f then
 		local flChance = .1
@@ -596,7 +598,7 @@ RegisterSchedule( "GekkoMelee", { Execute = function( self, pSchedule, MyTable )
 			flChance = 1 / 3
 		else flChance = .5 end
 
-		if flDistance <= f && math.random() <= flChance * FrameTime() then
+		if flDistance <= f && math.random() <= flChance * 4 * FrameTime() then
 			if math.random( 2 ) == 1 then
 				local flMultiplier = math.Rand( .75, 1.25 )
 

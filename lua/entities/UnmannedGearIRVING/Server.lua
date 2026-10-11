@@ -1,7 +1,7 @@
 DEFINE_BASECLASS "BaseActor"
 
 if !CLASS_DESPERADO_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_WORLD_MARSHAL" end
-ENT.iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
+ENT.m_iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
 ENT.bNightVision = true
 
@@ -404,7 +404,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	else
 		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 1.2 * flMultiplier, 1 / 1.2 )
 	end
-	self:GrountMovement( pPath, flSpeed, tFilter )
+	self:GroundMovement( pPath, flSpeed, tFilter )
 end
 
 function ENT:Stand() self.loco:SetJumpHeight( self.flJumpHeight ) BaseClass.Stand( self ) end
@@ -460,9 +460,9 @@ RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self,
 		else
 			// We did not pass the calibration test. To not overload the system and
 			// set the motors into their idle mode, do not test again for some time
-			// NOTE: Do NOT base the time until the next attempt on the nervous
-			// system status! It will make us repeatedly check when we are almost
-			// back to normal, and as such will significantly slow down the process!
+			// NOTE: Do NOT base the time on the next available attempt to check
+			// the nervous system status! It will make us repeatedly check when we are
+			// almost back to normal, and as such will significantly slow down the process!
 			MyTable.flWrongLegPing = math.Rand( 2, 4 )
 			MyTable.AnimationSystemHalt( self, MyTable )
 			MyTable.PlaySequenceAndWait( self, "stun_end", math.random( 2 ) == 1 && math.Rand( 1 - flLegStatus * .8, 1 - flLegStatus * .6 ) || math.Rand( 1 + flLegStatus * .6, 1 + flLegStatus * .8 ) )
@@ -512,9 +512,15 @@ ENT.m_flRandomTargetChirpVolumeTarget = 1
 function ENT:GekkoChirpControllerRaise( MyTable, flFrameTime )
 	MyTable = MyTable || self
 
-	MyTable.m_flRandomTargetChirpVolumeCurrent = math.Approach( MyTable.m_flRandomTargetChirpVolumeCurrent, MyTable.m_flRandomTargetChirpVolumeTarget, .1 * flFrameTime )
+	MyTable.m_flTargetChirpVolume = math.Approach( MyTable.m_flTargetChirpVolume, 1, flFrameTime )
+end
 
-	if MyTable.m_flRandomTargetChirpVolumeCurrent == MyTable.m_flRandomTargetChirpVolumeTarget then
+function ENT:GekkoChirpControllerRandom( MyTable, flFrameTime )
+	MyTable = MyTable || self
+
+	MyTable.m_flRandomTargetChirpVolumeCurrent = math.Approach( MyTable.m_flRandomTargetChirpVolumeCurrent, MyTable.m_flRandomTargetChirpVolumeTarget, 1 / 3 * flFrameTime )
+
+	if math.random() <= .1 * flFrameTime then
 		MyTable.m_flRandomTargetChirpVolumeTarget = math.Rand( .2, 1 )
 	end
 
@@ -526,7 +532,7 @@ function ENT:GekkoChirpControllerHush( MyTable, flFrameTime )
 	( MyTable || self ).m_flTargetChirpVolume = math.Approach( ( MyTable || self ).m_flTargetChirpVolume, 0, flFrameTime )
 end
 
-ENT.Defense = {
+ENT.Dodge = {
 	DodgeLeft = {
 		HasDodgePart = function() return true end,
 

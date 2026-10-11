@@ -4,7 +4,7 @@
 DEFINE_BASECLASS "BaseActor"
 
 if !CLASS_DESPERADO_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_WORLD_MARSHAL" end
-ENT.iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
+ENT.m_iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
 local MACHINEGUN_BASE_BONE = "bone055"
 local MACHINEGUN_BONE = "bone056"
@@ -158,7 +158,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 		//	elseif flDifference <= 135 || flDifference > 0 then self:PromoteSequence "dash_r"
 		//	else self:PromoteSequence "dash_b" end
 	end
-	self:GrountMovement( pPath, flSpeed, tFilter )
+	self:GroundMovement( pPath, flSpeed, tFilter )
 end
 
 ENT.flNextMachineGunShot = 0

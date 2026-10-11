@@ -2,7 +2,7 @@ DEFINE_BASECLASS "BaseActor"
 
 if !CLASS_DESPERADO_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_WORLD_MARSHAL" end
 
-ENT.iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
+ENT.m_iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
 ENT.m_sIdleSequence = "idle"
 
@@ -210,7 +210,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 		self:PromoteSequence( "walk", flVelocity / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) )
 	end
 	
-	self:GrountMovement( pPath, flSpeed, tFilter )
+	self:GroundMovement( pPath, flSpeed, tFilter )
 end
 
 ENT.m_sDefaultCombatSchedule = "IntimidationWalk"

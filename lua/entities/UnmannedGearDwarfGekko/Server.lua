@@ -13,7 +13,7 @@ end
 
 if !CLASS_DESPERADO_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_WORLD_MARSHAL" end
 
-ENT.iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
+ENT.m_iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
 ENT.bNightVision = true
 
@@ -40,7 +40,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	if f <= 12 then self:PromoteSequence "idle"
 	// We only have a running sequence, not a walking one, so play that
 	else self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) ) end
-	self:GrountMovement( pPath, flSpeed, tFilter )
+	self:GroundMovement( pPath, flSpeed, tFilter )
 end
 
 function ENT:OnKilled( ... )
