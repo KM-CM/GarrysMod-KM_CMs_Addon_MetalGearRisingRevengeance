@@ -5,7 +5,7 @@ function ENT:CustomMoo( MyTable )
 	end
 end
 
-function ENT:OhBoyItsTimeToJump( pEnemy, MyTable, bCustomMoo )
+function ENT:OhBoyItsTimeToJump( pEnemy, MyTable, bCustomMoo, fOnComplete )
 	local vIntercept = MyTable.InterceptJump( self, pEnemy, nil, MyTable.flJumpHeight )
 
 	if !vIntercept then return end
@@ -13,11 +13,40 @@ function ENT:OhBoyItsTimeToJump( pEnemy, MyTable, bCustomMoo )
 	if !bCustomMoo then MyTable.CustomMoo( self, MyTable ) end
 
 	vIntercept:Sub( self:GetPos() )
-	MyTable.SetSchedule( self, "GekkoInterceptJump", MyTable ).aLook = vIntercept:Angle()
+
+	local pSchedule = MyTable.SetSchedule( self, "GekkoInterceptJump", MyTable )
+	pSchedule.aLook = vIntercept:Angle()
+	pSchedule.fOnComplete = fOnComplete
+end
+
+function ENT:Taunt( pEnemy, MyTable )
+	local flMultiplier = math.Rand( .75, 1.25 )
+
+	timer.Simple( .8 / flMultiplier, function()
+		if !IsValid( self ) then return end
+		util.ScreenShake( self:GetPos() + self:OBBCenter(), 8, 40, 2, 4096, true )
+		self:EmitSound "GekkoTaunt"
+	end )
+
+	MyTable.AnimationSystemHalt( self, MyTable )
+
+	MyTable.PlaySequenceAndWait( self, "taunt", flMultiplier, nil, function()
+		if IsValid( pEnemy ) then
+			MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
+		end
+
+		MyTable.Look( self, MyTable )
+		MyTable.HandleTurning( self, MyTable )
+
+		if IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+			return true
+		end
+	end )
 end
 
 local util_ScreenShake = util.ScreenShake
 
+ENT.sChargeSchedule = "GekkoCharge"
 ENT.flChargeTimeMin = 10
 ENT.flChargeTimeMax = 20
 // Keep speeds all in one back at Server.lua
@@ -38,13 +67,16 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 
 		pSchedule.m_bInitialized = true
 
+		local bInterrupt
+
 		timer.Simple( math.Rand( 0, self:SequenceDuration( self:LookupSequence "charge_start" ) ), function()
-			if !IsValid( self ) then return end
+			if !IsValid( self ) && !bInterrupt then return end
 			MyTable.CustomMoo( self, MyTable )
 		end )
 
 		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndMove( self, "charge_start", 1, nil, function()
+
+		MyTable.PlaySequenceAndMove( self, "charge_start", 1, nil, function( _, flCycle )
 			MyTable.m_flDontTurnHeadTime = CurTime() + .1
 
 			if IsValid( pEnemy ) then
@@ -54,14 +86,25 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 
 			MyTable.Look( self, MyTable )
 			MyTable.HandleTurning( self, MyTable )
+
+			if IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+				bInterrupt = true
+				return true
+			end
 		end )
+
+		if bInterrupt then
+			local f = pSchedule.fOnInterrupt
+			if f && f( self, pSchedule, MyTable ) then return end
+			return true
+		end
 
 		local flDuration = math.Rand( MyTable.flChargeTimeMin, MyTable.flChargeTimeMax )
 		pSchedule.flDuration = flDuration
 		pSchedule.flEndTime = CurTime() + flDuration
 
 		if IsValid( pEnemy ) && math.random( 5 ) == 1 && MyTable.IsInterceptJumpLegalShort( self, pEnemy, MyTable.flJumpHeight ) then
-			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable )
+			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, nil, MyTable.fOnComplete )
 			return
 		elseif math.random( 5 ) == 1 then
 			pSchedule.flJumpChance = 6
@@ -70,24 +113,35 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 
 	if !IsValid( pEnemy ) then
 		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndMove( self, "charge_end", math.Rand( .75, 1.25 ) )
+		MyTable.PlaySequenceAndMove( self, "charge_end", math.Rand( .75, 1.25 ), nil, function( _, flCycle )
+			if flCycle > .2 && IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+				return true
+			end
+		end )
 		return true
 	end
 
 	if CurTime() > pSchedule.flEndTime then
 		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndMove( self, "charge_end", math.Rand( .75, 1.25 ) )
+		MyTable.PlaySequenceAndMove( self, "charge_end", math.Rand( .75, 1.25 ), nil, function( _, flCycle )
+			if flCycle > .2 && IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+				return true
+			end
+		end )
 
 		if IsValid( pEnemy ) && math.random( 3 ) == 1 && MyTable.IsInterceptJumpLegal( self, pEnemy, MyTable.flJumpHeight ) then
-			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable )
+			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, nil, MyTable.fOnComplete )
 			return
 		end
+
+		local f = pSchedule.fOnComplete
+		if f && f( self, pSchedule, MyTable ) then return end
 
 		return true
 	end
 
 	if math.random() <= pSchedule.flJumpChance * MyTable.m_flFrameTime && MyTable.IsInterceptJumpLegalShort( self, pEnemy, MyTable.flJumpHeight ) then
-		MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable )
+		MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, nil, MyTable.fOnComplete )
 		return
 	end
 
@@ -100,7 +154,11 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 	if pEnemy.__ACTOR_BULLSEYE__ && v:DistToSqr( pEnemy:NearestPoint( v ) ) <= f && ( pEnemy == pTrueEnemy || pTrueEnemy:NearestPoint( pEnemy:GetPos() ):DistToSqr( pEnemy:GetPos() ) > f ) then
 		self:ReportPositionAsClear( pEnemy:GetPos() )
 		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndMove( self, "charge_end", 1 )
+		MyTable.PlaySequenceAndMove( self, "charge_end", math.Rand( .75, 1.25 ), nil, function( _, flCycle )
+			if flCycle > .2 && IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+				return true
+			end
+		end )
 		return
 	end
 
@@ -186,12 +244,20 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 
 	if bStop then
 		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndMove( self, "charge_end", 1 )
+		MyTable.PlaySequenceAndMove( self, "charge_end", math.Rand( .75, 1.25 ), nil, function( _, flCycle )
+			if flCycle > .2 && IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+				return true
+			end
+		end )
+
+		local f = pSchedule.fOnComplete
+		if f && f( self, pSchedule, MyTable ) then return end
+
 		return true
 	end
 end } )
 
-RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
+RegisterSchedule( "GekkoAttack", { Execute = function( self, pSchedule, MyTable )
 	local pEnemy, pTrueEnemy = MyTable.Enemy
 
 	if IsValid( pEnemy ) then
@@ -216,7 +282,27 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 	local sSequence = math.random( 2 ) == 1 && "att1_2" || "att2_2"
 	local flMultiplier = math.Rand( 2 / 3, 1 + 1 / 3 )
 
-	// TODO: Melee data here!
+	MyTable.MELEE_flStart = CurTime()
+	MyTable.MELEE_flHit = CurTime() + self:SequenceDuration( sWarmupSequence ) / flWarmupMultiplier + .1 / flMultiplier
+	MyTable.MELEE_flEnd = CurTime() + self:SequenceDuration( sWarmupSequence ) / flWarmupMultiplier + self:SequenceDuration( sSequence ) / flMultiplier
+	MyTable.MELEE_flDamage = 4096 / flMultiplier
+	MyTable.MELEE_fvStart = function( self ) return self:GetPos() end
+	MyTable.MELEE_fvEnd = function( self ) return self:GetPos() + self:GetForward() * 80 end
+
+	local vMins, vMaxs = Vector( MyTable.vHullMins ), Vector( MyTable.vHullMaxs )
+	local flModelScale = self:GetModelScale()
+	vMins:Mul( flModelScale )
+	vMaxs:Mul( flModelScale )
+	vMins[ 1 ] = vMins[ 1 ] * 2
+	vMins[ 2 ] = vMins[ 2 ] * 2
+	vMaxs[ 1 ] = vMaxs[ 1 ] * 2
+	vMaxs[ 2 ] = vMaxs[ 2 ] * 2
+	vMins[ 1 ] = vMins[ 1 ] + 24
+
+	MyTable.MELEE_fvMins = function() return vMins end
+	MyTable.MELEE_fvMaxs = function() return vMaxs end
+
+	local bInterrupt
 
 	MyTable.PlaySequenceAndWait( self, sWarmupSequence, flWarmupMultiplier, nil, function()
 		if IsValid( pEnemy ) then
@@ -226,25 +312,27 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 
 		MyTable.Look( self, MyTable )
 		MyTable.HandleTurning( self, MyTable )
+
+		if IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+			bInterrupt = true
+			return true
+		end
 	end )
+
+	if bInterrupt then
+		local f = pSchedule.fOnInterrupt
+		if f && f( self, pSchedule, MyTable ) then return end
+		return true
+	end
 
 	self:EmitSound "GekkoSwing"
 
 	timer.Simple( .1 / flMultiplier, function()
 		local bHit, bHitEnemy, bShake
 		if !IsValid( self ) then return end
-		local vMins, vMaxs = Vector( MyTable.vHullMins ), Vector( MyTable.vHullMaxs )
-		local flModelScale = self:GetModelScale()
-		vMins:Mul( flModelScale )
-		vMaxs:Mul( flModelScale )
-		vMins[ 1 ] = vMins[ 1 ] * 2
-		vMins[ 2 ] = vMins[ 2 ] * 2
-		vMaxs[ 1 ] = vMaxs[ 1 ] * 2
-		vMaxs[ 2 ] = vMaxs[ 2 ] * 2
-		vMins[ 1 ] = vMins[ 1 ] + 24
 		if util.TraceHull( {
 			start = self:GetPos(),
-			endpos = self:GetPos() + self:GetForward() * 160 * flModelScale,
+			endpos = self:GetPos() + self:GetForward() * 80 * flModelScale,
 			mins = vMins,
 			maxs = vMaxs,
 			filter = function( pEntity )
@@ -273,15 +361,13 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 		} ).Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
 
 		util_ScreenShake( self:GetPos() + self:OBBCenter(), bShake && 512 || 24, 1, 1, 4096, true )
-
-		if !bHitEnemy then MyTable.Schedule = nil end
 	end )
 
 	if !bLowed then MyTable.CustomMoo( self, MyTable ) end
 
 	MyTable.AnimationSystemHalt( self, MyTable )
 
-	MyTable.PlaySequenceAndWait( self, sSequence, flMultiplier, nil, function()
+	MyTable.PlaySequenceAndWait( self, sSequence, flMultiplier, nil, function( _, flCycle )
 		if IsValid( pEnemy ) then
 			MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
 			MyTable.vaAimTargetPose = MyTable.vaAimTargetBody
@@ -289,10 +375,18 @@ RegisterSchedule( "GekkoAttack", { Execute = function( self, sched, MyTable )
 
 		MyTable.Look( self, MyTable )
 		MyTable.HandleTurning( self, MyTable )
+
+		if flCycle > .2 && IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+			return true
+		end
 	end )
+
+	local f = pSchedule.fOnComplete
+	if f && f( self, pSchedule, MyTable ) then return end
+	return true
 end } )
 
-function ENT:GetStompDamageRadius() return self:BoundingRadius() * 2 end
+function ENT:GetStompDamageRadius() return self:BoundingRadius() * 1.75 end
 
 RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 	local pEnemy, pTrueEnemy = MyTable.Enemy
@@ -325,6 +419,7 @@ RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 
 	MyTable.AnimationSystemHalt( self, MyTable )
 
+	local bInterrupt
 	MyTable.PlaySequenceAndWait( self, "stomp1", flWarmupMultiplier, true, function()
 		if IsValid( pEnemy ) then
 			MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
@@ -333,12 +428,23 @@ RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 			MyTable.Look( self, MyTable )
 			MyTable.HandleTurning( self, MyTable )
 		end
+
+		if IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+			bInterrupt = true
+			return true
+		end
 	end )
+
+	if bInterrupt then
+		local f = pSchedule.fOnInterrupt
+		if f && f( self, pSchedule, MyTable ) then return end
+		return true
+	end
 
 	MyTable.vaAimTargetBody = self:GetAngles()
 
 	timer.Simple( .1 / flMultiplier, function()
-		if !IsValid( self ) then return end
+		if !IsValid( self ) || bInterrupt then return end
 
 		local vPos = self:GetPos()
 
@@ -378,32 +484,38 @@ RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 
 	MyTable.AnimationSystemHalt( self, MyTable )
 
-	MyTable.PlaySequenceAndWait( self, "att3", flMultiplier, true, function()
+	MyTable.PlaySequenceAndWait( self, "stomp2", flMultiplier, true, function()
 		if IsValid( pEnemy ) then
 			MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
 
 			MyTable.Look( self, MyTable )
 			MyTable.HandleTurning( self, MyTable )
 		end
-	end )
 
-	MyTable.PlaySequenceAndWait( self, "att3_unstuck", flLeaveMultiplier, nil, function()
-		if IsValid( pEnemy ) then
-			MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
+		if IsActiveDefenseAction( MyTable.HandleDefense( self, MyTable ) ) then
+			bInterrupt = true
+			return true
 		end
-
-		MyTable.Look( self, MyTable )
-		MyTable.HandleTurning( self, MyTable )
 	end )
 
-	local sNextScheduleOverride = pSchedule.sNextScheduleOverride
-	if sNextScheduleOverride then MyTable.SetSchedule( self, sNextScheduleOverride, MyTable ) return end
+	if bInterrupt then
+		MyTable.PromoteSequenceInstant( self, "idle", 1 )
+		local f = pSchedule.fOnInterrupt
+		if f && f( self, pSchedule, MyTable ) then return end
+		return true
+	end
 
+	local f = pSchedule.fOnComplete
+	if f && f( self, pSchedule, MyTable ) then return end
 	return true
 end } )
 
 RegisterSchedule( "GekkoInterceptJump", { Execute = function( self, pSchedule, MyTable )
-	if self:IsOnGround() then return true end
+	if self:IsOnGround() then
+		local f = pSchedule.fOnComplete
+		if f && f( self, pSchedule, MyTable ) then return end
+		return true
+	end
 
 	local pEnemy = MyTable.Enemy
 	if IsValid( pEnemy ) then
@@ -443,51 +555,46 @@ RegisterSchedule( "UnmannedGearIRVINGCombat", { Execute = function( self, pSched
 	MyTable.SetSchedule( self, "IntimidationWalk", MyTable )
 end } )
 
-ENT.m_sDefaultMeleeSchedule = "GekkoMelee"
+ENT.m_sDefaultMeleeSchedule = "WeaponsPlatformMelee"
 
-RegisterSchedule( "GekkoMelee", { Execute = function( self, pSchedule, MyTable )
-	MyTable.GekkoChirpControllerCombat( self, MyTable )
+ENT.sJumpOnTheirHeadSchedule = "GekkoInterceptJump"
 
-	if table.IsEmpty( MyTable.tEnemies ) then return true end
+function ENT:HandleHeadJump( MyTable, pEnemy, pSchedule, fOnComplete )
+	local bCustomMoo
 
-	local pEnemy = MyTable.Enemy
-	if !IsValid( pEnemy ) then return true end
+	if GetVelocity( self ):Length() <= MyTable.flPowerWalkSpeed && math.random( 1, 2 ) == 1 then
+		bCustomMoo = MyTable.CustomMoo( self, MyTable )
 
-	local pEnemy, pTrueEnemy = self:SetupEnemy( pEnemy )
+		MyTable.AnimationSystemHalt( self, MyTable )
 
-	local f = self:BoundingRadius()
-	f = f * f
-	local v = self:GetPos()
-	if pEnemy.__ACTOR_BULLSEYE__ && v:DistToSqr( pEnemy:NearestPoint( v ) ) <= f && ( pEnemy == pTrueEnemy || pTrueEnemy:NearestPoint( pEnemy:GetPos() ):DistToSqr( pEnemy:GetPos() ) > f ) then
-		self:ReportPositionAsClear( pEnemy:GetPos() )
+		MyTable.PlaySequenceAndWait( self, "jump_start", math.Rand( 1, 2 ), nil, function()
+			if IsValid( pEnemy ) then
+				MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
+			end
+
+			MyTable.Look( self, MyTable )
+			MyTable.HandleTurning( self, MyTable )
+		end )
+
+		if IsValid( pEnemy ) then MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, bCustomMoo, fOnComplete ) return else return true end
+	elseif IsValid( pEnemy ) then
+		local iLayer = self:AddGestureSequence( self:LookupSequence "jump_start" )
+		self:SetLayerWeight( iLayer, .5 )
+		self.flSpeedUpAnimationsTime = CurTime() + self:SequenceDuration( self:LookupSequence "jump_start" )
+		local flMultiplier = math.Rand( .75, 1.5 )
+		self:SetLayerPlaybackRate( iLayer, flMultiplier )
+		pSchedule.flPerformingJump = 1.5 / flMultiplier
+		timer.Simple( .9 / flMultiplier, function()
+			if IsValid( self ) && IsValid( pEnemy ) && MyTable.Schedule == pSchedule then
+				MyTable.AnimationSystemHalt( self, MyTable )
+				MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, bCustomMoo, fOnComplete )
+			end
+		end )
 		return
-	end
+	else return true end
+end
 
-	local pEnemyPath = MyTable.pEnemyPath
-	if !pEnemyPath then
-		pEnemyPath = Path "Follow"
-		MyTable.pEnemyPath = pEnemyPath
-	end
-
-	MyTable.ManageFlankPath( self, pEnemyPath, pEnemy, pSchedule, MyTable )
-
-	MyTable.MoveAlongPath( self, pEnemyPath, MyTable.flTopSpeed )
-
-	local pGoal = pEnemyPath:GetCurrentGoal()
-	if pGoal then MyTable.vaAimTargetBody = ( pGoal.pos - self:GetPos() ):Angle() end
-
-	MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
-
-	local EDefense, flOptional = MyTable.HandleDefense( self, MyTable )
-	if EDefense > DEF_NO_ACTION_NEEDED then
-		if EDefense == DEF_DONT_ADVANCE_TO_RANGE then
-			// TODO: Handle this, duh xD
-		else return end
-	end
-
-	if !self:IsOnGround() || CurTime() <= ( pSchedule.flPerformingJump || 0 ) then return end
-
-	// Never charge or taunt if we can just smash 'em
+function ENT:CheckAndDoDumbMelee( MyTable, pEnemy, pTrueEnemy )
 	local bHit
 	local vMins, vMaxs = Vector( MyTable.vHullMins ), Vector( MyTable.vHullMaxs )
 	vMins[ 3 ] = vMins[ 3 ] + 12
@@ -495,7 +602,7 @@ RegisterSchedule( "GekkoMelee", { Execute = function( self, pSchedule, MyTable )
 
 	if util.TraceHull( {
 		start = self:GetPos(),
-		endpos = self:GetPos() + self:GetForward() * 96 * self:GetModelScale(),
+		endpos = self:GetPos() + self:GetForward() * 60 * self:GetModelScale(),
 		mins = vMins,
 		maxs = vMaxs,
 		filter = function( pEntity )
@@ -511,118 +618,11 @@ RegisterSchedule( "GekkoMelee", { Execute = function( self, pSchedule, MyTable )
 	bStomp = bStomp * bStomp
 	bStomp = self:GetPos():DistToSqr( pEnemy:NearestPoint( self:GetPos() ) ) <= bStomp
 
-	if bHit && bStomp then
-		MyTable.SetSchedule( self, math.random( 1, 3 ) == 1 && "GekkoStomp" || "GekkoAttack", MyTable )
-		return
+	if bHit && bStomp then return MyTable.SetSchedule( self, math.random( 1, 3 ) == 1 && "GekkoStomp" || "GekkoAttack", MyTable )
+	// This TECHNICALLY makes 'em prefer the farther attack, but I'm too lazy to fix this now lmao
+	elseif bHit then
+		return MyTable.SetSchedule( self, "GekkoAttack", MyTable )
+	elseif bStomp then
+		return MyTable.SetSchedule( self, "GekkoStomp", MyTable )
 	end
-
-	if !self:Visible( pEnemy ) then return end
-
-	pEnemyPath:MoveCursorToClosestPosition( self:GetPos() )
-
-	if math.random() <= .4 * MyTable.m_flFrameTime && MyTable.IsInterceptJumpLegal( self, pEnemy ) then
-		local bCustomMoo
-
-		if math.random( 6 ) == 1 then
-			bCustomMoo = MyTable.CustomMoo( self, MyTable )
-
-			MyTable.AnimationSystemHalt( self, MyTable )
-
-			MyTable.PlaySequenceAndWait( self, "jump_start", math.Rand( 1, 2 ), nil, function()
-				if IsValid( pEnemy ) then
-					MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
-				end
-
-				MyTable.Look( self, MyTable )
-				MyTable.HandleTurning( self, MyTable )
-			end )
-
-			MyTable.CustomMoo( self, MyTable )
-
-			MyTable.PlaySequenceAndWait( self, "jump_start", -math.Rand( 1, 2 ), nil, function()
-				if IsValid( pEnemy ) then
-					MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
-				end
-
-				MyTable.Look( self, MyTable )
-				MyTable.HandleTurning( self, MyTable )
-			end )
-
-			return
-		end
-
-		if GetVelocity( self ):Length() <= MyTable.flPowerWalkSpeed && math.random( 1, 2 ) == 1 then
-			bCustomMoo = MyTable.CustomMoo( self, MyTable )
-
-			MyTable.AnimationSystemHalt( self, MyTable )
-
-			MyTable.PlaySequenceAndWait( self, "jump_start", math.Rand( 1, 2 ), nil, function()
-				if IsValid( pEnemy ) then
-					MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
-				end
-
-				MyTable.Look( self, MyTable )
-				MyTable.HandleTurning( self, MyTable )
-			end )
-
-			if IsValid( pEnemy ) then MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, bCustomMoo ) return else return true end
-		elseif IsValid( pEnemy ) then
-			local iLayer = self:AddGestureSequence( self:LookupSequence "jump_start" )
-			self:SetLayerWeight( iLayer, .5 )
-			self.flSpeedUpAnimationsTime = CurTime() + self:SequenceDuration( self:LookupSequence "jump_start" )
-			local flMultiplier = math.Rand( 1, 1 + 1 / 3 )
-			self:SetLayerPlaybackRate( iLayer, flMultiplier )
-			pSchedule.flPerformingJump = 1.5 / flMultiplier
-			timer.Simple( .9 / flMultiplier, function()
-				if IsValid( self ) && IsValid( pEnemy ) then
-					MyTable.AnimationSystemHalt( self, MyTable )
-					MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, bCustomMoo )
-				end
-			end )
-			return
-		else return true end
-	end
-
-	if math.random() <= .2 * MyTable.m_flFrameTime && MyTable.LowIfAvailable( self, MyTable ) then
-		util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 6, 4, 4096, true )
-	end
-
-	local flDistance = pEnemyPath:GetLength() - pEnemyPath:GetCursorPosition()
-
-	local f = MyTable.flChargeSpeed * MyTable.flChargeTimeMin * .4
-
-	if flDistance <= f then
-		local flChance = .1
-		if flDistance <= MyTable.flJogSpeed * .75 then
-		elseif flDistance <= MyTable.flJogSpeed * 2 then
-			flChance = 1 / 3
-		else flChance = .5 end
-
-		if flDistance <= f && math.random() <= flChance * 4 * FrameTime() then
-			if math.random( 2 ) == 1 then
-				local flMultiplier = math.Rand( .75, 1.25 )
-
-				timer.Simple( .8 / flMultiplier, function()
-					if !IsValid( self ) then return end
-					util_ScreenShake( self:GetPos() + self:OBBCenter(), 8, 40, 2, 4096, true )
-					self:EmitSound "GekkoTaunt"
-				end )
-
-				MyTable.AnimationSystemHalt( self, MyTable )
-
-				MyTable.PlaySequenceAndWait( self, "taunt", flMultiplier, nil, function()
-					if IsValid( pEnemy ) then
-						MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter()
-					end
-
-					MyTable.Look( self, MyTable )
-					MyTable.HandleTurning( self, MyTable )
-				end )
-				return
-			end
-
-			MyTable.SetSchedule( self, "GekkoCharge", MyTable )
-		end
-		return
-	end
-end } )
+end

@@ -119,5 +119,5 @@ RegisterSchedule( "GekkoStompFirearm", { Execute = function( self, pSchedule, My
 		return
 	end
 
-	MyTable.SetSchedule( self, "GekkoStomp", MyTable ).sNextScheduleOverride = "Alert"
+	MyTable.SetSchedule( self, "GekkoStomp", MyTable ).fOnComplete = function() MyTable.SetSchedule( self, "Alert", MyTable ) end
 end } )

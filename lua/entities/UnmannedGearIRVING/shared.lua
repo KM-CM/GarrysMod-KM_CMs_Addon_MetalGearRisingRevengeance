@@ -21,6 +21,22 @@ sound.Add {
 	}
 }
 
+sound.Add {
+	name = "GekkoNuclearDetonation",
+	channel = CHAN_STATIC,
+	level = 150,
+	pitch = { 90, 110 },
+	sound = {
+		"phx/explode00.wav",
+		"phx/explode01.wav",
+		"phx/explode02.wav",
+		"phx/explode03.wav",
+		"phx/explode04.wav",
+		"phx/explode05.wav",
+		"phx/explode06.wav"
+	}
+}
+
 // Keep these soundlevels semi low as there's no far sound variation
 sound.Add {
 	name = "GekkoStompA",

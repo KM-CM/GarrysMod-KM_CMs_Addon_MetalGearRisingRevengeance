@@ -9,7 +9,7 @@ list.Set( "NPC", "DesperadoUnmannedGearIRVING", {
 	Category = "#DesperadoEnforcementLLC"
 } )
 
-if !SERVER then return end
+if CLIENT then return end
 
 function ENT:Initialize()
 	self:SetModel "models/linux55/mgr/linux55_cow_desperado.mdl"

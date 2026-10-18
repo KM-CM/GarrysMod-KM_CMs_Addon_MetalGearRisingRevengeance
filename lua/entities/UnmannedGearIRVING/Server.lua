@@ -29,7 +29,7 @@ NOT_A_VOICELINE[ "Gekko/StepB.wav" ] = true
 local function fChargeOStep( self, _, flWeight )
 	if flWeight <= .75 then return end
 	self:EmitSound "GekkoStepCharge"
-	util_ScreenShake( self:GetPos() + self:OBBCenter(), 6, 1, 1, 2048, true )
+	util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
 end
 
 ENT.flWalkTime = 0
@@ -58,7 +58,7 @@ ENT.tSequenceEvents = {
 			end
 
 			self:EmitSound "GekkoStepJog"
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 2, 1, 1, 2048, true )
 		end,
 
 		[ .54 ] = function( self, _, flWeight )
@@ -71,7 +71,7 @@ ENT.tSequenceEvents = {
 			end
 
 			self:EmitSound "GekkoStepJog"
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 2, 1, 1, 2048, true )
 		end
 	},
 
@@ -92,12 +92,12 @@ ENT.tSequenceEvents = {
 	att3_unstuck = {
 		[ .58 ] = function( self )
 			self:EmitSound "GekkoStepJog"
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 2, 1, 1, 2048, true )
 		end,
 
 		[ .8 ] = function( self )
 			self:EmitSound "GekkoStepJog"
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 2048, true )
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 2, 1, 1, 2048, true )
 		end
 	},
 
@@ -190,7 +190,7 @@ function ENT:OnLandOnGround()
 	end
 
 	util.BlastDamage( self, self, vPos, self:BoundingRadius() * 2, 1 )
-	util_ScreenShake( vPos, 8, 40, 1.5, 4096, true )
+	util_ScreenShake( vPos, 12, 80, 3, 4096, true )
 	self.GAME_OnHurtSomething = nil
 
 	local pData = EffectData()
@@ -211,10 +211,14 @@ function ENT:OnLandOnGround()
 end
 
 function ENT:PostJumpInternal()
+	local vPos = self:GetPos()
+
 	local pData = EffectData()
 	pData:SetEntity( self )
-	pData:SetOrigin( self:GetPos() )
+	pData:SetOrigin( vPos )
 	util.Effect( "GekkoJump", pData )
+
+	util_ScreenShake( vPos, 8, 40, 2.5, 4096, true )
 
 	self:EmitSound "GekkoJump"
 end
@@ -262,51 +266,42 @@ end
 
 ENT.flNextMachineGunShot = 0
 
-local MACHINEGUN_DELAY = .1
+ENT.tActiveWeaponTemplates = {
+	MachineGun = {
+		Attachment = function() return "Head" end,
 
-function ENT:FireMachineGun()
-	if CurTime() <= self.flNextMachineGunShot then return end
-	self.flNextMachineGunShot = CurTime() + MACHINEGUN_DELAY
+		BarrelVector = function( self )
+			local vPos, aAngles = self:GetBonePosition( self:LookupBone( HEAD_BONE ) )
+			return vPos + aAngles:Up() * 47 + aAngles:Right() * -12 + aAngles:Forward() * 2.7
+		end,
 
-	local iBoneID = self:LookupBone( HEAD_BONE )
-	if !iBoneID then return end
+		BarrelDirection = function( self )
+			local _, aAngles = self:GetBonePosition( self:LookupBone( HEAD_BONE ) )
+			return aAngles:Up()
+		end,
 
-	local vPos, aAngles = self:GetBonePosition( iBoneID )
+		SpreadX = function() return .0028 end,
+		SpreadY = function() return .0028 end,
 
-	local dShoot = aAngles:Up()
-	local vShoot = vPos + aAngles:Up() * 47 + aAngles:Right() * -12 + aAngles:Forward() * 2.7
+		IsAutomatic = function() return true end,
 
-	local pEffectData = EffectData()
+		Delay = function() return 60 / 650 end,
 
-	pEffectData:SetEntity( self )
-	pEffectData:SetMaterialIndex( 0 )
+		Sound = function() return "GekkoMachineGunFire" end,
 
-	pEffectData:SetOrigin( vShoot )
-	pEffectData:SetStart( vShoot )
-	pEffectData:SetNormal( dShoot )
-	pEffectData:SetAngles( dShoot:Angle() )
-	pEffectData:SetMagnitude( 1 / ( MACHINEGUN_DELAY * math.Rand( .75, 1.25 ) ) )
-
-	util.Effect( "MuzzleFlashGeneric", pEffectData )
-
-	self:FireBullets {
-		Attacker = self,
-		Src = vShoot,
-		Dir = dShoot,
-		Tracer = 1,
-		Spread = Vector( .25 / 90, .25 / 90 ),
-		Damage = 40,
-		Force = 1
+		Damage = function() return 70 end
 	}
+}
 
-	self:EmitSound "GekkoMachineGunFire"
-end
+ENT.tActiveBodyTemplates = {
+	Head = {
+		SetAimTarget = function( self, vaAimTarget ) self.vaAimTargetPose = vaAimTarget end,
+		GetAimTarget = function( self ) return self.vaAimTargetPose end,
 
-function ENT:CanFireMachineGun( pEnemy, pTrueEnemy, MyTable )
-	local vPos, aAngles = self:GetBonePosition( self:LookupBone( HEAD_BONE ) )
-
-	return MyTable.CanAttackCustom( self, pEnemy, pTrueEnemy, MyTable, nil, aAngles:Up(), vPos + aAngles:Up() * 47 + aAngles:Right() * -12 + aAngles:Forward() * 2.7, .25, .25 )
-end
+		GetDamping = function( self ) return self.flHeadDamping end,
+		SetDamping = function( self, flDamping ) self.flOverrideHeadDampingThisTick = flDamping end
+	}
+}
 
 ENT.m_flDontTurnHeadTime = 0
 
@@ -359,7 +354,9 @@ function ENT:HandleTurning( MyTable )
 
 		local vHeadVelocity = self.vHeadVelocity
 		vHeadVelocity:Add( vDelta * self.flHeadStiffness * flFrameTime )
-		vHeadVelocity:Mul( math.exp( self.flHeadDamping * flFrameTime ) )
+		vHeadVelocity:Mul( math.exp( ( self.flOverrideHeadDampingThisTick || self.flHeadDamping ) * flFrameTime ) )
+
+		self.flOverrideHeadDampingThisTick = nil
 
 		aHeadAngles[ 1 ] = aHeadAngles[ 1 ] + vHeadVelocity[ 1 ] * flFrameTime
 		aHeadAngles[ 2 ] = aHeadAngles[ 2 ] + vHeadVelocity[ 2 ] * flFrameTime
@@ -370,13 +367,67 @@ end
 
 function ENT:OnKilled( ... )
 	if BaseClass.OnKilled( self, ... ) then return end
-	self:Remove()
+
+	self:SetSchedule "Death"
+
+	self:AddFlags( FL_NOTARGET )
+
+	self:KilledRemoveFromAllyList()
+
+	local pChirpLoop = self.m_pChirpLoop
+	if pChirpLoop then pChirpLoop:Stop() end
+
+	local sTimer = "ForceDatShit_" .. EntityUniqueIdentifier( self )
+	timer.Create( sTimer, 0, 0, function()
+		if !IsValid( self ) then timer.Remove( sTimer ) return end
+
+		if self.sCallMeInRunBehaviour == "Death" then return end
+
+		self.sCallMeInRunBehaviour = "Death"
+		self.fCallMeInRunBehaviour = function( self, MyTable )
+			// TODO: Give AI some sort of "GET DOWN, IT'S GONNA BLOW!!" hint
+			if math.random( 100 ) > 5 then
+				local flLast = 0
+				for i = 0, math.random() * math.random() * math.random() * math.random() * 19 do
+					local flTimer = 1 + math.random() * math.random() * math.random() * math.random() * 120
+
+					if flTimer > flLast then flLast = flTimer end
+			
+					timer.Simple( flTimer, function()
+						if !IsValid( self ) then return end
+						local vPos = self:GetPos()
+						util_ScreenShake( vPos, 14, 80, 1.5, 4096, true )
+						util.BlastDamage( self, self, vPos, math.Rand( 250, 300 ), math.Rand( 1000, 1200 ) )
+						ParticleEffect( "kf2_sl_splode_fire_real333", vPos, Angle( 0, math.random() * 360, 0 ) )
+						self:EmitSound "GekkoNuclearDetonation"
+					end )
+				end
+
+				if math.random( 100 ) > 5 then
+					timer.Simple( flLast + .01, function()
+						if !IsValid( self ) then return end
+						self:Remove()
+					end )
+				end
+			end
+
+			MyTable.AnimationSystemHalt( self, MyTable )
+			MyTable.flAnimationSystemStopFor = math.huge
+			local sSequence = "death" .. math.random( 1, 5 )
+			MyTable.PlaySequenceAndMove( self, sSequence, math.Rand( .75, 1 ), true, function( _, flCycle )
+				if flCycle > .98 then
+					self:SetPlaybackRate( 0 )
+					while true do coroutine.yield() end
+				end
+			end, true )
+		end
+	end )
 end
 
 ENT.flTopSpeed = 512
 ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flWalkSpeed = 96
-ENT.flFastWalkSpeed = 128
+ENT.flFastWalkSpeed = 110
 ENT.flPowerWalkSpeed = 160
 
 ENT.flChargeSpeed = 820
@@ -394,13 +445,11 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	pLocomotion:SetJumpHeight( self.flJumpHeight )
 	local f = GetVelocity( self ):Length()
 	local flMultiplier = 1
-	if CurTime() <= self.flSpeedUpAnimationsTime then
-		flMultiplier = 1.5
-	end
+	if CurTime() <= self.flSpeedUpAnimationsTime then flMultiplier = 1.5 end
 	if f <= 12 || !self:IsOnGround() then
 	elseif f <= ( self.flPowerWalkSpeed * 1.1 ) then
 		self.flWalkTime = CurTime() + .1
-		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 2.5 * flMultiplier, 1 / 2.5 )
+		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 2 * flMultiplier, 1 / 2 )
 	else
 		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 1.2 * flMultiplier, 1 / 1.2 )
 	end
