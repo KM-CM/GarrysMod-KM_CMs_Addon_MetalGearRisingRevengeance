@@ -374,6 +374,8 @@ function ENT:OnKilled( ... )
 
 	self:KilledRemoveFromAllyList()
 
+	self.DEATH_bFallingDead = true
+
 	local pChirpLoop = self.m_pChirpLoop
 	if pChirpLoop then pChirpLoop:Stop() end
 
@@ -416,6 +418,8 @@ function ENT:OnKilled( ... )
 			local sSequence = "death" .. math.random( 1, 5 )
 			MyTable.PlaySequenceAndMove( self, sSequence, math.Rand( .75, 1 ), true, function( _, flCycle )
 				if flCycle > .98 then
+					self.DEATH_bFallingDead = nil
+					self.DEATH_bSeemsDead = true
 					self:SetPlaybackRate( 0 )
 					while true do coroutine.yield() end
 				end
