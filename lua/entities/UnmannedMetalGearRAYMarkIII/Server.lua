@@ -12,7 +12,7 @@ ENT.vHullMaxs = Vector( 200, 200, 800 )
 ENT.flBodyStiffness = 2
 ENT.flBodyDamping = -8
 
-ENT.flGravityMultiplierInAir = 2
+ENT.flGravityMultiplierInAir = 1.5
 
 ENT.bCannotCarryWeapons = true
 
@@ -106,11 +106,14 @@ function ENT:Initialize()
 	BaseClass.Initialize( self )
 end
 
+function ENT:OnKilled( dDamage )
+	if BaseClass.OnKilled( self, dDamage ) then return end
+	self:Remove()
+end
+
 function ENT:OnLandOnGround()
 	self.sCallMeInRunBehaviour = "Land"
 	self.fCallMeInRunBehaviour = function( self, MyTable )
-		if MyTable.bCharging then return end
-
 		MyTable.AnimationSystemHalt( self, MyTable )
 
 		local bLanded, bSmoked

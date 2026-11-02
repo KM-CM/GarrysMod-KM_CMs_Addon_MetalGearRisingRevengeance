@@ -15,11 +15,14 @@ ENT.bCannotCarryWeapons = true
 ENT.flVisionYaw = 120
 ENT.flVisionPitch = 80
 
-ENT.flGravityMultiplierInAir = 2
+ENT.flBodyStiffness = 14
+ENT.flBodyDamping = -8
 
 ENT.m_flIdleSequenceWeight = .5
 ENT.m_sIdleSequence = "idle"
 //	ENT.m_sIdle2Sequence = "ref"
+
+ENT.flGravityMultiplierInAir = 2
 
 local util_ScreenShake = util.ScreenShake
 
@@ -47,15 +50,25 @@ function ENT:LowIfAvailable( MyTable )
 end
 
 ENT.tSequenceEvents = {
-	run = {
+	walk = {
 		[ .2 ] = function( self, _, flWeight )
 			if flWeight <= .75 then return end
 
-			if CurTime() < self.flWalkTime then
-				self:EmitSound "GekkoStepTiptoes"
-				util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
-				return
-			end
+			self:EmitSound "GekkoStepTiptoes"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+		end,
+
+		[ .54 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+
+			self:EmitSound "GekkoStepTiptoes"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+		end
+	},
+
+	run = {
+		[ .2 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
 
 			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 2, 1, 1, 2048, true )
@@ -63,12 +76,6 @@ ENT.tSequenceEvents = {
 
 		[ .54 ] = function( self, _, flWeight )
 			if flWeight <= .75 then return end
-
-			if CurTime() < self.flWalkTime then
-				self:EmitSound "GekkoStepTiptoes"
-				util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
-				return
-			end
 
 			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 2, 1, 1, 2048, true )
@@ -170,7 +177,11 @@ function ENT:Initialize()
 	BaseClass.Initialize( self )
 end
 
+ENT.flChargeTime = 0
+
 function ENT:OnLandOnGround()
+	if self.sCallMeInRunBehaviour == "Land" || self.sCallMeInRunBehaviour == "land" then return end
+
 	local vPos = self:GetPos()
 
 	function self:GAME_OnHurtSomething( pEntity, dDamage )
@@ -202,10 +213,11 @@ function ENT:OnLandOnGround()
 
 	self.sCallMeInRunBehaviour = "Land"
 	self.fCallMeInRunBehaviour = function( self, MyTable )
-		if !MyTable.bCharging then
-			MyTable.AnimationSystemHalt( self, MyTable )
-			MyTable.PlaySequenceAndWait( self, "land", math.Rand( .75, 1.25 ) )
-		end
+		if CurTime() <= self.flChargeTime then return true end
+
+		MyTable.AnimationSystemHalt( self, MyTable )
+		MyTable.PlaySequenceAndMove( self, "land", math.Rand( .75, 1.25 ), nil, nil, true )
+
 		return true
 	end
 end
@@ -220,7 +232,10 @@ function ENT:PostJumpInternal()
 
 	util_ScreenShake( vPos, 8, 40, 2.5, 4096, true )
 
-	self:EmitSound "GekkoJump"
+	self:EmitSound "GekkoJumpThud"
+	self:EmitSound "GekkoJumpHoovePart"
+	self:EmitSound "GekkoJumpHoovePart"
+	self:EmitSound "GekkoJumpHoovePart"
 end
 
 local HEAD_BONE = "bone006"
@@ -285,9 +300,10 @@ ENT.tActiveWeaponTemplates = {
 
 		IsAutomatic = function() return true end,
 
-		Delay = function() return 60 / 650 end,
+		Delay = function() return 60 / 1200 end,
 
 		Sound = function() return "GekkoMachineGunFire" end,
+		SoundAuto = function() return "GekkoMachineGunFireAuto", "GekkoMachineGunFireAuto", "GekkoMachineGunFireAuto" end,
 
 		Damage = function() return 70 end
 	}
@@ -389,28 +405,15 @@ function ENT:OnKilled( ... )
 		self.fCallMeInRunBehaviour = function( self, MyTable )
 			// TODO: Give AI some sort of "GET DOWN, IT'S GONNA BLOW!!" hint
 			if math.random( 100 ) > 5 then
-				local flLast = 0
-				for i = 0, math.random() * math.random() * math.random() * math.random() * 19 do
-					local flTimer = 1 + math.random() * math.random() * math.random() * math.random() * 120
-
-					if flTimer > flLast then flLast = flTimer end
-			
-					timer.Simple( flTimer, function()
-						if !IsValid( self ) then return end
-						local vPos = self:GetPos()
-						util_ScreenShake( vPos, 14, 80, 1.5, 4096, true )
-						util.BlastDamage( self, self, vPos, math.Rand( 250, 300 ), math.Rand( 1000, 1200 ) )
-						ParticleEffect( "kf2_sl_splode_fire_real333", vPos, Angle( 0, math.random() * 360, 0 ) )
-						self:EmitSound "GekkoNuclearDetonation"
-					end )
-				end
-
-				if math.random( 100 ) > 5 then
-					timer.Simple( flLast + .01, function()
-						if !IsValid( self ) then return end
-						self:Remove()
-					end )
-				end
+				timer.Simple( 2 + math.random() * math.random() * math.random() * math.random() * 60, function()
+					if !IsValid( self ) then return end
+					local vPos = self:GetPos()
+					util_ScreenShake( vPos, 14, 80, 1.5, 4096, true )
+					util.BlastDamage( self, self, vPos, math.Rand( 250, 300 ), 4096 * math.Rand( .8, 1.2 ) )
+					ParticleEffect( "kf2_sl_splode_fire_real333", vPos, Angle( 0, math.random() * 360, 0 ) )
+					self:EmitSound "GekkoNuclearDetonation"
+					self:Remove()
+				end )
 			end
 
 			MyTable.AnimationSystemHalt( self, MyTable )
@@ -439,6 +442,7 @@ ENT.flChargeSpeed = 820
 ENT.flJumpHeight = 1024
 
 ENT.flSpeedUpAnimationsTime = 0
+ENT.flSpeedUpAnimationsWeight = 0
 
 function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	local pLocomotion = self.loco
@@ -447,16 +451,18 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 	pLocomotion:SetAcceleration( f )
 	pLocomotion:SetDeceleration( f )
 	pLocomotion:SetJumpHeight( self.flJumpHeight )
+
 	local f = GetVelocity( self ):Length()
 	local flMultiplier = 1
-	if CurTime() <= self.flSpeedUpAnimationsTime then flMultiplier = 1.5 end
+	if CurTime() <= self.flSpeedUpAnimationsTime then flMultiplier = 1 / ( 1 - self.flSpeedUpAnimationsWeight ) end
+
 	if f <= 12 || !self:IsOnGround() then
 	elseif f <= ( self.flPowerWalkSpeed * 1.1 ) then
-		self.flWalkTime = CurTime() + .1
-		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 2 * flMultiplier, 1 / 2 )
+		self:PromoteSequence( "walk", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) * flMultiplier )
 	else
-		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * 1.2 * flMultiplier, 1 / 1.2 )
+		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * flMultiplier )
 	end
+
 	self:GroundMovement( pPath, flSpeed, tFilter )
 end
 
@@ -497,6 +503,7 @@ RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self,
 	if !pSchedule.m_bInitialized then
 		MyTable.AnimationSystemHalt( self, MyTable )
 		MyTable.PlaySequenceAndWait( self, "stun_start", 1 )
+		MyTable.PromoteSequenceInstant( self, "stun" )
 		pSchedule.m_bInitialized = true
 	end
 
@@ -528,14 +535,14 @@ RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self,
 	// Don't ping the nervous system if we're unsure whether it already works!
 	// It will automatically get into a stable posture and perform repeating
 	// oscillations when it loses connection with us.
-	MyTable.PromoteSequence( self, "stun", 1 )
+	MyTable.PromoteSequence( self, "stun" )
 	MyTable.Stand( self )
 end } )
 
 ENT.flLegStatus = 1
 
 function ENT:OnTakeDamage( dDamage )
-	dDamage:ScaleDamage( math.Remap( dDamage:GetDamage(), 0, self:Health(), .1, 1 ) )
+	dDamage:ScaleDamage( math.Clamp( dDamage:GetDamage() / 600, 0, 1 ) )
 
 	local flHealth = Lerp( .25, self:Health(), self:GetMaxHealth() )
 
@@ -704,3 +711,4 @@ ENT.m_sDefaultShareAlertSchedule = "UnmannedGearIRVINGShareAlert"
 
 include "Combat.lua"
 include "InspectFirearm.lua"
+include "Control.lua"

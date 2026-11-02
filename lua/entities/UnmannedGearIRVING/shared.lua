@@ -9,6 +9,8 @@ scripted_ents.Register( ENT, "UnmannedGearIRVING" )
 
 ENT.CATEGORIZE = { Gekko = true, IRVING = true }
 
+ENT.__CONTROLLABLE__ = true
+
 sound.Add {
 	name = "GekkoImpact",
 	channel = CHAN_AUTO,
@@ -54,11 +56,24 @@ sound.Add {
 }
 
 sound.Add {
-	name = "GekkoJump",
+	name = "GekkoJumpThud",
 	channel = CHAN_STATIC,
-	level = 90,
+	level = 100,
 	pitch = { 90, 110 },
-	sound = "^Gekko/Jump.wav"
+	volume = .3,
+	sound = "^Gekko/Thud.wav"
+}
+
+sound.Add {
+	name = "GekkoJumpHoovePart",
+	channel = CHAN_STATIC,
+	level = 100,
+	pitch = { 90, 110 },
+	sound = {
+		"^Gekko/HooveA.wav",
+		"^Gekko/HooveB.wav",
+		"^Gekko/HooveC.wav"
+	}
 }
 
 sound.Add {
@@ -66,13 +81,13 @@ sound.Add {
 	channel = CHAN_STATIC,
 	level = 110,
 	pitch = { 90, 110 },
-	sound = "^Gekko/Jump.wav"
+	sound = "^Gekko/Thud.wav"
 }
 
 sound.Add {
 	name = "GekkoSwing",
 	channel = CHAN_STATIC,
-	volume = 1,
+	volume = .5,
 	level = 120,
 	pitch = { 90, 110 },
 	sound = {
@@ -187,7 +202,15 @@ sound.Add {
 sound.Add {
 	name = "GekkoChirpLoop",
 	channel = CHAN_STATIC,
-	level = 120,
+	level = 110,
+	sound = "^Gekko/ChirpLoop.wav"
+}
+
+// TODO: Chirp louder when we are aware of an enemy and are heading to attack
+sound.Add {
+	name = "GekkoChirpLoopLoud",
+	channel = CHAN_STATIC,
+	level = 130,
 	sound = "^Gekko/ChirpLoop.wav"
 }
 
@@ -195,8 +218,16 @@ sound.Add {
 	name = "GekkoMachineGunFire",
 	channel = CHAN_WEAPON,
 	level = 150,
-	pitch = { 90, 110 },
-	sound = "weapons/smg1/smg1_fire1.wav"
+	pitch = { 85, 100 },
+	sound = "^Gekko/Fire.wav"
+}
+
+sound.Add {
+	name = "GekkoMachineGunFireAuto",
+	channel = CHAN_STATIC,
+	level = 150,
+	pitch = { 85, 100 },
+	sound = "^Gekko/Fire.wav"
 }
 
 function ENT:GetMuzzleFlashPosition( sMuzzleFlash )

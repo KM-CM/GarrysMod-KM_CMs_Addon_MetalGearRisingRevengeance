@@ -24,6 +24,8 @@ ENT.flVisionPitch = 60
 
 ENT.m_sIdleSequence = "idle"
 
+ENT.bSkater = true
+
 local util_ScreenShake = util.ScreenShake
 
 ENT.tSequenceEvents = {
@@ -386,6 +388,8 @@ function ENT:OnRemove()
 end
 
 function ENT:Stand() self.loco:SetJumpHeight( 0 ) BaseClass.Stand( self ) end
+
+// TODO: Rework this into the new WeaponsPlatformSkateMelee and use that instead
 
 ENT.m_sDefaultCombatSchedule = "UnmannedGearGRADCombat"
 
