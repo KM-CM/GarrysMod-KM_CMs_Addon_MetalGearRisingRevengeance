@@ -12,7 +12,7 @@ EFFECT.flLifeTime = 0
 function EFFECT:Init( pData )
 	self:SetRenderMode( RENDERMODE_TRANSALPHA )
 
-	local fGetPos, fGetAngles = function() return vector_origin end, function() return angle_zero end
+	local fGetPos/*, fGetAngles*/ = function() return vector_origin end//, function() return angle_zero end
 
 	local v = pData:GetStart()
 	local pEntity = pData:GetEntity()
@@ -28,15 +28,15 @@ function EFFECT:Init( pData )
 		end
 	end
 
-	local fGetMuzzleFlashAngles = pEntity.GetMuzzleFlashAngles
-	local bCustomAngles = fGetMuzzleFlashAngles && fGetMuzzleFlashAngles( pEntity, "UnmannedGearGRAD76MMMuzzleFlash", iGetMaterialIndex )
-	if bCustomAngles then
-		local iGetMaterialIndex = pData:GetMaterialIndex()
-		fGetAngles = function()
-			if !IsValid( pEntity ) then return angle_zero end
-			return fGetMuzzleFlashAngles( pEntity, "UnmannedGearGRAD76MMMuzzleFlash", iGetMaterialIndex ) || angle_zero
-		end
-	end
+	//	local fGetMuzzleFlashAngles = pEntity.GetMuzzleFlashAngles
+	//	local bCustomAngles = fGetMuzzleFlashAngles && fGetMuzzleFlashAngles( pEntity, "UnmannedGearGRAD76MMMuzzleFlash", iGetMaterialIndex )
+	//	if bCustomAngles then
+	//		local iGetMaterialIndex = pData:GetMaterialIndex()
+	//		fGetAngles = function()
+	//			if !IsValid( pEntity ) then return angle_zero end
+	//			return fGetMuzzleFlashAngles( pEntity, "UnmannedGearGRAD76MMMuzzleFlash", iGetMaterialIndex ) || angle_zero
+	//		end
+	//	end
 
 	if !bCustomPosition && IsValid( pEntity ) then
 		if IsValid( pOwner ) then
@@ -67,12 +67,12 @@ function EFFECT:Init( pData )
 		end
 	end
 
-	if !bCustomAngles then
-		fGetAngles = function()
-			if !IsValid( pOwner ) then return angle_zero end
-			return pOwner:EyeAngles()
-		end
-	end
+	//	if !bCustomAngles then
+	//		fGetAngles = function()
+	//			if !IsValid( pOwner ) then return angle_zero end
+	//			return pOwner:EyeAngles()
+	//		end
+	//	end
 
 	self.m_pEntity = pEntity
 
@@ -96,9 +96,9 @@ function EFFECT:Init( pData )
 	local flLifeTime = .25
 
 	local aAngles = pData:GetAngles()
-	local vForward = Vector( 1, 0, 0 )
-	local vRight = Vector( 0, -1, 0 )
-	local vUp = Vector( 0, 0, 1 )
+	local vForward = aAngles:Forward()
+	local vRight = aAngles:Right()
+	local vUp = aAngles:Up()
 
 	for i = 1, 64 do
 		local pPart = pEmitter:Add( "effects/muzzleflash" .. math_random( 1, 4 ), fGetPos() )
@@ -124,7 +124,7 @@ function EFFECT:Init( pData )
 			local vOffset = pPart.m_vOffset
 			vOffset:Add( pPart:GetVelocity() * FrameTime() )
 			local v = Vector( vOffset )
-			v:Rotate( fGetAngles() )
+			//	v:Rotate( fGetAngles() )
 			v:Add( fGetPos() )
 			pPart:SetPos( v )
 			pPart:SetNextThink( CurTime() )
@@ -155,7 +155,7 @@ function EFFECT:Init( pData )
 			local vOffset = pPart.m_vOffset
 			vOffset:Add( pPart:GetVelocity() * FrameTime() )
 			local v = Vector( vOffset )
-			v:Rotate( fGetAngles() )
+			//	v:Rotate( fGetAngles() )
 			v:Add( fGetPos() )
 			pPart:SetPos( v )
 			pPart:SetNextThink( CurTime() )
@@ -186,7 +186,7 @@ function EFFECT:Init( pData )
 			local vOffset = pPart.m_vOffset
 			vOffset:Add( pPart:GetVelocity() * FrameTime() )
 			local v = Vector( vOffset )
-			v:Rotate( fGetAngles() )
+			//	v:Rotate( fGetAngles() )
 			v:Add( fGetPos() )
 			pPart:SetPos( v )
 			pPart:SetNextThink( CurTime() )
