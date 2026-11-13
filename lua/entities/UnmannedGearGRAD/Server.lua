@@ -444,8 +444,12 @@ RegisterSchedule( "GRADSlideToMelee", { Execute = function( self, pSchedule, MyT
 
 	MyTable.MoveAlongPath( self, pEnemyPath, MyTable.flTopSpeed )
 
-	local pGoal = pEnemyPath:GetCurrentGoal()
-	if pGoal then MyTable.vaAimTargetBody = ( pGoal.pos - self:GetPos() ):Angle() end
+	if self:Visible( pEnemy ) then
+		MyTable.vaAimTargetBody = pEnemy:GetPos() + pEnemy:OBBCenter()
+	else
+		local pGoal = pEnemyPath:GetCurrentGoal()
+		if pGoal then MyTable.vaAimTargetBody = ( pGoal.pos - self:GetPos() ):Angle() end
+	end
 
 
 	MyTable.flWeaponPrimaryVolleyTimeMin = 0
@@ -461,10 +465,10 @@ RegisterSchedule( "GRADSlideToMelee", { Execute = function( self, pSchedule, MyT
 	MyTable.flWeaponPrimaryVolleyTimeMax = 4
 
 	MyTable.flWeaponPrimaryVolleyBreakMin = 0
-	MyTable.flWeaponPrimaryVolleyBreakMax = 16
+	MyTable.flWeaponPrimaryVolleyBreakMax = 6
 
 	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMin = 0
-	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMax = 1
+	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMax = 2
 
 	if MyTable.WeaponPrimaryVolleyContainer( self, "Cannon", nil, MyTable ) && MyTable.CanFireCannon( self, pEnemy, pTrueEnemy, MyTable ) then MyTable.FireCannon( self, MyTable ) end
 
@@ -516,10 +520,10 @@ RegisterSchedule( "GRADCombatWalk", { Execute = function( self, pSchedule, MyTab
 	MyTable.flWeaponPrimaryVolleyTimeMax = 4
 
 	MyTable.flWeaponPrimaryVolleyBreakMin = 0
-	MyTable.flWeaponPrimaryVolleyBreakMax = 8
+	MyTable.flWeaponPrimaryVolleyBreakMax = 4
 
 	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMin = 0
-	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMax = 1
+	MyTable.flWeaponPrimaryVolleyNonAutomaticDelayMax = 2
 
 	if MyTable.WeaponPrimaryVolleyContainer( self, "Cannon", nil, MyTable ) && MyTable.CanFireCannon( self, pEnemy, pTrueEnemy, MyTable ) then MyTable.FireCannon( self, MyTable ) end
 

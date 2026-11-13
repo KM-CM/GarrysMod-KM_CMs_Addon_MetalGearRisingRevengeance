@@ -51,8 +51,8 @@ ENT.flChargeTimeMin = 10
 ENT.flChargeTimeMax = 20
 // Keep speeds all in one back at Server.lua
 RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable )
-	MyTable.flOverrideBodyStiffnessThisTick = 4
-	MyTable.flOverrideBodyDampingThisTick = -6
+	MyTable.flOverrideBodyStiffnessThisTick = 16
+	MyTable.flOverrideBodyDampingThisTick = -4
 
 	MyTable.flChargeTime = CurTime() + .1
 
@@ -108,8 +108,8 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, nil, MyTable.fOnComplete )
 			return
 		elseif math.random( 8 ) == 1 then
-			pSchedule.flJumpChance = 4
-		else pSchedule.flJumpChance = .25 end
+			pSchedule.flJumpChance = math.Rand( 2, 4 )
+		else pSchedule.flJumpChance = .03 end
 	end
 
 	if !IsValid( pEnemy ) then
@@ -130,18 +130,13 @@ RegisterSchedule( "GekkoCharge", { Execute = function( self, pSchedule, MyTable 
 			end
 		end )
 
-		if IsValid( pEnemy ) && math.random( 3 ) == 1 && MyTable.IsInterceptJumpLegal( self, pEnemy, MyTable.flJumpHeight ) then
-			MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, nil, MyTable.fOnComplete )
-			return
-		end
-
 		local f = pSchedule.fOnComplete
 		if f && f( self, pSchedule, MyTable ) then return end
 
 		return true
 	end
 
-	if math.random() <= pSchedule.flJumpChance * MyTable.m_flFrameTime && MyTable.IsInterceptJumpLegalShort( self, pEnemy, MyTable.flJumpHeight ) then
+	if math.random() <= pSchedule.flJumpChance * MyTable.m_flFrameTime && MyTable.IsInterceptJumpLegal( self, pEnemy, MyTable.flJumpHeight ) then
 		MyTable.OhBoyItsTimeToJump( self, pEnemy, MyTable, nil, MyTable.fOnComplete )
 		return
 	end
@@ -721,9 +716,26 @@ function ENT:CheckAndDoDumbMelee( MyTable, pEnemy, pTrueEnemy )
 	} ).Hit && !bHit then return end
 
 	// Yes, I know this is fucked up
-	local bStomp = MyTable.GetStompDamageRadius( self ) * .75
-	bStomp = bStomp * bStomp
-	bStomp = self:GetPos():DistToSqr( pEnemy:NearestPoint( self:GetPos() ) ) <= bStomp
+	local flStomp = MyTable.GetStompDamageRadius( self ) * .75
+	flStomp = flStomp * flStomp
+
+	local bStomp
+
+	util.TraceLine( {
+		start = self:GetPos(),
+		endpos = self:GetPos() + ( pEnemy:GetPos() + pEnemy:OBBCenter() - self:GetPos() ):GetNormalized() * flStomp,
+		filter = function( pHit )
+			if pHit == self then return false end
+
+			if self:Disposition( pHit ) != D_LI then
+				bStomp = true
+				return true
+			end
+
+			return true
+		end,
+		mask = MASK_SHOT
+	} )
 
 	if bHit && bStomp then return MyTable.SetSchedule( self, math.random( 1, 3 ) == 1 && "GekkoStomp" || ( math.random( 2 ) == 1 && "GekkoAttackRoundhouse" || "GekkoAttackStraight" ), MyTable ) end
 end

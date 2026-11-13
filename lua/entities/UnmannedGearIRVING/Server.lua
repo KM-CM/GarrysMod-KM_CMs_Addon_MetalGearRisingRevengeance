@@ -281,7 +281,7 @@ end
 
 ENT.flNextMachineGunShot = 0
 
-ENT.tActiveWeaponTemplates = {
+ENT.m_pActiveWeaponTemplates = {
 	MachineGun = {
 		Attachment = function() return "Head" end,
 
@@ -309,7 +309,7 @@ ENT.tActiveWeaponTemplates = {
 	}
 }
 
-ENT.tActiveBodyTemplates = {
+ENT.m_pActiveBodyTemplates = {
 	Head = {
 		SetAimTarget = function( self, vaAimTarget ) self.vaAimTargetPose = vaAimTarget end,
 		GetAimTarget = function( self ) return self.vaAimTargetPose end,
@@ -342,6 +342,7 @@ function ENT:HandleTurning( MyTable )
 			local flPitch = math.AngleDifference( aShoot[ 1 ], aHeadAngles[ 1 ] )
 			if CurTime() <= self.m_flDontTurnHeadTime then
 				vaHeadTarget[ 1 ] = flPitch
+				vaHeadTarget[ 2 ] = self:GetAngles()[ 2 ]
 			else
 				local flDiff = math.AngleDifference( vaHeadTarget[ 1 ], flPitch )
 				if flDiff < -50 then vaHeadTarget[ 1 ] = flPitch - 50
@@ -354,6 +355,7 @@ function ENT:HandleTurning( MyTable )
 			local flPitch = math.AngleDifference( aShoot[ 1 ], aHeadAngles[ 1 ] )
 			if CurTime() <= self.m_flDontTurnHeadTime then
 				vaHeadTarget[ 1 ] = flPitch
+				vaHeadTarget[ 2 ] = self:GetAngles()[ 2 ]
 			else
 				local flDiff = math.AngleDifference( vaHeadTarget[ 1 ], flPitch )
 				if flDiff < -50 then vaHeadTarget[ 1 ] = flPitch - 50
@@ -363,9 +365,15 @@ function ENT:HandleTurning( MyTable )
 			vDelta[ 1 ] = math.AngleDifference( vaHeadTarget[ 1 ], aShoot[ 1 ] )
 			vDelta[ 2 ] = math.AngleDifference( vaHeadTarget[ 2 ], aShoot[ 2 ] )
 		else
-			local aAngles = self:GetAngles()
-			vDelta[ 1 ] = math.AngleDifference( aAngles[ 1 ], aShoot[ 1 ] )
-			vDelta[ 2 ] = math.AngleDifference( aAngles[ 2 ], aShoot[ 2 ] )
+			if CurTime() <= self.m_flDontTurnHeadTime then
+				vaHeadTarget[ 1 ] = flPitch
+				vaHeadTarget[ 2 ] = self:GetAngles()[ 2 ]
+			end
+
+			// vDelta is left zero - we must slow down (by vaAimTargetBody polling rules)
+			//	local aAngles = self:GetAngles()
+			//	vDelta[ 1 ] = math.AngleDifference( aAngles[ 1 ], aShoot[ 1 ] )
+			//	vDelta[ 2 ] = math.AngleDifference( aAngles[ 2 ], aShoot[ 2 ] )
 		end
 
 		local vHeadVelocity = self.vHeadVelocity
@@ -497,12 +505,13 @@ function ENT:Stand() self.loco:SetJumpHeight( self.flJumpHeight ) BaseClass.Stan
 // which avoids hardware damage and bad posture. Unlike AI Errors, this is an issue with our
 // biological part, therefore we can still see and hear while in it.
 ENT.flWrongLegPing = 0
-RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self, pSchedule, MyTable )
-	MyTable.vaAimTargetPose = self:GetAngles()
+RegisterSchedule( "GekkoNeuroMuscularInterfaceError", { Execute = function( self, pSchedule, MyTable )
+	MyTable.vaAimTargetBody = nil
+	MyTable.vaAimTargetPose = nil
 
 	if !pSchedule.m_bInitialized then
 		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndWait( self, "stun_start", 1 )
+		MyTable.PlaySequenceAndMove( self, "stun_start", 1 )
 		MyTable.PromoteSequenceInstant( self, "stun" )
 		pSchedule.m_bInitialized = true
 	end
@@ -516,7 +525,7 @@ RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self,
 		if flLegStatus >= 1 then
 			MyTable.Schedule = nil
 			MyTable.AnimationSystemHalt( self, MyTable )
-			MyTable.PlaySequenceAndWait( self, "stun_end", math.Rand( .6, 1.4 ) )
+			MyTable.PlaySequenceAndMove( self, "stun_end", math.Rand( .6, 1.4 ) )
 		else
 			// We did not pass the calibration test. To not overload the system and
 			// set the motors into their idle mode, do not test again for some time
@@ -525,13 +534,16 @@ RegisterSchedule( "GekkoBrainMachineInterfaceError", { Execute = function( self,
 			// almost back to normal, and as such will significantly slow down the process!
 			MyTable.flWrongLegPing = math.Rand( 2, 4 )
 			MyTable.AnimationSystemHalt( self, MyTable )
-			MyTable.PlaySequenceAndWait( self, "stun_end", math.random( 2 ) == 1 && math.Rand( 1 - flLegStatus * .8, 1 - flLegStatus * .6 ) || math.Rand( 1 + flLegStatus * .6, 1 + flLegStatus * .8 ) )
+			MyTable.PlaySequenceAndMove( self, "stun_end", math.random( 2 ) == 1 && math.Rand( 1 - flLegStatus * .8, 1 - flLegStatus * .6 ) || math.Rand( 1 + flLegStatus * .6, 1 + flLegStatus * .8 ) )
 		end
 		return
 	end
 
-	MyTable.flWrongLegPing = math.Clamp( flWrongLegPing - flLegStatus * FrameTime(), 0, 1 )
-	MyTable.flLegStatus = math.Clamp( flLegStatus + .33 * FrameTime(), 0, 1 )
+	MyTable.flWrongLegPing = math.Clamp( flWrongLegPing - flLegStatus * MyTable.m_flFrameTime, 0, 4 )
+
+	// Keep in mind this is surprisingly fast!
+	MyTable.flLegStatus = math.Clamp( flLegStatus + 1 / 3 * MyTable.m_flFrameTime, 0, 1 )
+
 	// Don't ping the nervous system if we're unsure whether it already works!
 	// It will automatically get into a stable posture and perform repeating
 	// oscillations when it loses connection with us.
@@ -552,8 +564,8 @@ function ENT:OnTakeDamage( dDamage )
 	self.flLegStatus = f
 
 	local pSchedule = self.Schedule
-	if !( pSchedule && pSchedule.m_sName == "GekkoBrainMachineInterfaceError" ) then
-		if self.flLegStatus <= math.Rand( 0, dDamage:GetDamage() / flHealth * 100 ) then self:SetSchedule "GekkoBrainMachineInterfaceError" end
+	if !( pSchedule && pSchedule.m_sName == "GekkoNeuroMuscularInterfaceError" ) then
+		if self.flLegStatus <= math.Rand( 0, dDamage:GetDamage() / flHealth * 100 ) then self:SetSchedule "GekkoNeuroMuscularInterfaceError" end
 	end
 
 	return BaseClass.OnTakeDamage( self, dDamage )

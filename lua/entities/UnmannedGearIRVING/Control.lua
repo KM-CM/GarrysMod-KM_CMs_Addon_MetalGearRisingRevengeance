@@ -21,7 +21,7 @@ end
 
 function ENT:HandleControl( MyTable, pController )
 	local pSchedule = MyTable.Schedule
-	if pSchedule && pSchedule.m_sName == "GekkoBrainMachineInterfaceError" then
+	if pSchedule && pSchedule.m_sName == "GekkoNeuroMuscularInterfaceError" then
 		MyTable.RunMind( self, MyTable )
 		return
 	end
@@ -233,7 +233,7 @@ function ENT:HandleControl( MyTable, pController )
 	end
 
 	if bit.band( pController.CONTROL_iButtons || 0, IN_ATTACK ) != 0 then
-		FireWeapon( self, "MachineGun", MyTable.tActiveWeaponTemplates.MachineGun )
+		FireWeapon( self, "MachineGun", MyTable.m_pActiveWeaponTemplates.MachineGun )
 	end
 
 	if bit.band( pController.CONTROL_iButtons || 0, IN_USE ) != 0 then
