@@ -324,7 +324,7 @@ RegisterSchedule( "GekkoAttackRoundhouse", { Execute = function( self, pSchedule
 	timer.Simple( .1 / flMultiplier, function()
 		local bHit
 		if !IsValid( self ) then return end
-		/*if */util.TraceHull( {
+		if util.TraceHull( {
 			start = self:GetPos(),
 			endpos = self:GetPos() + self:GetForward() * 80 * flModelScale,
 			mins = vMins,
@@ -346,12 +346,12 @@ RegisterSchedule( "GekkoAttackRoundhouse", { Execute = function( self, pSchedule
 				v:Mul( math.Rand( 1000 * 85, 1200 * 85 ) / flMultiplier )
 				dDamage:SetDamageForce( v )
 				pEntity:TakeDamageInfo( dDamage )
-				if !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
+				if !bHit then self:EmitSound "GekkoImpact" bHit = true end
 				return false
 			end,
 			mask = MASK_SOLID
 		// In case we hit the world
-		} )/*.Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end*/
+		} ).Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true end
 
 		if !bHit then self:EmitSound "GekkoSwing" end
 
@@ -479,10 +479,8 @@ RegisterSchedule( "GekkoAttackStraight", { Execute = function( self, pSchedule, 
 		return true
 	end
 
-	self:EmitSound "GekkoSwing"
-
 	timer.Simple( .1 / flMultiplier, function()
-		local bHit, bHitEnemy, bShake
+		local bHit
 		if !IsValid( self ) then return end
 		if util.TraceHull( {
 			start = self:GetPos(),
@@ -492,7 +490,6 @@ RegisterSchedule( "GekkoAttackStraight", { Execute = function( self, pSchedule, 
 			filter = function( pEntity )
 				if IsBullshitNonSolidEntity( pEntity ) then return false end
 				if MyTable.Disposition( self, pEntity, MyTable ) == D_LI then return false end
-				if !bHitEnemy && IsValid( pTrueEnemy ) && pEntity == pTrueEnemy then bHitEnemy = true end
 				local dDamage = DamageInfo()
 				dDamage:SetAttacker( self )
 				dDamage:SetDamageType( DMG_CLUB )
@@ -507,14 +504,16 @@ RegisterSchedule( "GekkoAttackStraight", { Execute = function( self, pSchedule, 
 				v:Mul( math.Rand( 1000 * 85, 1200 * 85 ) / flMultiplier )
 				dDamage:SetDamageForce( v )
 				pEntity:TakeDamageInfo( dDamage )
-				if !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
+				if !bHit then self:EmitSound "GekkoImpact" bHit = true end
 				return false
 			end,
 			mask = MASK_SOLID
 		// In case we hit the world
-		} ).Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
+		} ).Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true end
 
-		util_ScreenShake( self:GetPos() + self:OBBCenter(), bShake && 512 || 24, 1, 1, 4096, true )
+		if !bHit then self:EmitSound "GekkoSwing" end
+
+		util_ScreenShake( self:GetPos() + self:OBBCenter(), bHit && 512 || 24, 1, 1, 4096, true )
 	end )
 
 	MyTable.AnimationSystemHalt( self, MyTable )

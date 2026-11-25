@@ -59,8 +59,6 @@ ENT.flJumpHeight = 1536
 ENT.flSpeedUpAnimationsTime = 0
 ENT.flSpeedUpAnimationsWeight = 0
 
-function ENT:Stand() if self:IsOnGround() then self.flBoneActuatorsTime = CurTime() + .2 end end
-
 // TODO: Implement dynamic turning, I guess
 function ENT:MoveAlongPath( pPath, flSpeed, flHeight, tFilter, bAllowSliding, flToleranceOverride, bNoAvoid, fJump, fDrop )
 	local pLocomotion = self.loco
@@ -74,7 +72,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, flHeight, tFilter, bAllowSliding, fl
 	local flMultiplier = 1
 	if CurTime() <= self.flSpeedUpAnimationsTime then flMultiplier = 1 / ( 1 - self.flSpeedUpAnimationsWeight ) end
 
-	if self:IsOnGround() then self.flBoneActuatorsTime = math.max( self.flBoneActuatorsTime, CurTime() + .2 ) end
+	if self:IsOnGround() then self.flBoneActuatorsTime = math.max( self.flBoneActuatorsTime, CurTime() + 1 / 3 ) end
 
 	if f <= 12 || !self:IsOnGround() then
 	elseif f <= ( self.flPowerWalkSpeed * 1.1 ) then

@@ -398,8 +398,10 @@ function ENT:HandleTurning( MyTable )
 			vDelta[ 2 ] = math.AngleDifference( vaHeadTarget[ 2 ], aShoot[ 2 ] )
 		else
 			if CurTime() <= self.m_flDontTurnHeadTime then
-				vaHeadTarget[ 1 ] = flPitch
-				vaHeadTarget[ 2 ] = self:GetAngles()[ 2 ]
+				local flPitch = math.AngleDifference( aShoot[ 1 ], aHeadAngles[ 1 ] )
+				local aAngles = self:GetAngles()
+				vDelta[ 1 ] = math.AngleDifference( flPitch, aShoot[ 1 ] )
+				vDelta[ 2 ] = math.AngleDifference( self:GetAngles()[ 2 ], aShoot[ 2 ] )
 			end
 
 			// vDelta is left zero - we must slow down (by vaAimTargetBody polling rules)
@@ -476,7 +478,11 @@ function ENT:OnKilled( ... )
 	end )
 end
 
-function ENT:Stand() self.loco:SetJumpHeight( self.flJumpHeight ) BaseClass.Stand( self ) end
+function ENT:Stand()
+	if self:IsOnGround() then self.flBoneActuatorsTime = CurTime() + 1 / 3 end
+	self.loco:SetJumpHeight( self.flJumpHeight )
+	BaseClass.Stand( self )
+end
 
 // After playing some MGR, this is the animation that plays (I think)
 // where the Gekko stomps, gets its foot stuck in the ground,
@@ -582,8 +588,8 @@ function ENT:GekkoChirpControllerCombat( MyTable ) ( MyTable || self ).m_flTarge
 ENT.m_flRandomTargetChirpVolumeCurrent = 1
 ENT.m_flRandomTargetChirpVolumeTarget = 1
 
-ENT.m_flRandomTargetChirpVolumeChangeSpeedCurrent = 1
-ENT.m_flRandomTargetChirpVolumeChangeSpeedTarget = 1
+ENT.m_flRandomTargetChirpVolumeChangeSpeedCurrent = 1 / 3
+ENT.m_flRandomTargetChirpVolumeChangeSpeedTarget = 1 / 3
 
 // Calm raise to pretend to be a swarm of cicadas
 function ENT:GekkoChirpControllerRaise( MyTable, flFrameTime )
@@ -598,7 +604,7 @@ function ENT:GekkoChirpControllerRandom( MyTable, flFrameTime )
 	MyTable.m_flRandomTargetChirpVolumeChangeSpeedCurrent = math.Approach( MyTable.m_flRandomTargetChirpVolumeChangeSpeedCurrent, MyTable.m_flRandomTargetChirpVolumeChangeSpeedTarget, flFrameTime )
 
 	if math.random() <= .1 * flFrameTime then
-		MyTable.m_flRandomTargetChirpVolumeChangeSpeedTarget = math.Rand( .2, 1 )
+		MyTable.m_flRandomTargetChirpVolumeChangeSpeedTarget = math.Rand( .2, .4 )
 	end
 
 	MyTable.m_flRandomTargetChirpVolumeCurrent = math.Approach( MyTable.m_flRandomTargetChirpVolumeCurrent, MyTable.m_flRandomTargetChirpVolumeTarget, MyTable.m_flRandomTargetChirpVolumeChangeSpeedCurrent * flFrameTime )

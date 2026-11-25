@@ -114,10 +114,8 @@ function ENT:HandleControl( MyTable, pController )
 
 			if bInterrupt then return end
 
-			self:EmitSound "GekkoSwing"
-
 			timer.Simple( .1 / flMultiplier, function()
-				local bHit, bHitEnemy, bShake
+				local bHit
 				if !IsValid( self ) then return end
 				if util.TraceHull( {
 					start = self:GetPos(),
@@ -127,7 +125,6 @@ function ENT:HandleControl( MyTable, pController )
 					filter = function( pEntity )
 						if IsBullshitNonSolidEntity( pEntity ) then return false end
 						if MyTable.Disposition( self, pEntity, MyTable ) == D_LI then return false end
-						if !bHitEnemy && IsValid( pTrueEnemy ) && pEntity == pTrueEnemy then bHitEnemy = true end
 						local dDamage = DamageInfo()
 						dDamage:SetAttacker( self )
 						dDamage:SetDamageType( DMG_CLUB )
@@ -142,14 +139,16 @@ function ENT:HandleControl( MyTable, pController )
 						v:Mul( math.Rand( 1000 * 85, 1200 * 85 ) / flMultiplier )
 						dDamage:SetDamageForce( v )
 						pEntity:TakeDamageInfo( dDamage )
-						if !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
+						if !bHit then self:EmitSound "GekkoImpact" bHit = true end
 						return false
 					end,
 					mask = MASK_SOLID
 				// In case we hit the world
-				} ).Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true bShake = true end
+				} ).Hit && !bHit then self:EmitSound "GekkoImpact" bHit = true end
 
-				util.ScreenShake( self:GetPos() + self:OBBCenter(), bShake && 512 || 24, 1, 1, 4096, true )
+				if !bHit then self:EmitSound "GekkoSwing" end
+
+				util.ScreenShake( self:GetPos() + self:OBBCenter(), bHit && 512 || 24, 1, 1, 4096, true )
 			end )
 
 			MyTable.AnimationSystemHalt( self, MyTable )
@@ -223,6 +222,8 @@ function ENT:HandleControl( MyTable, pController )
 	local f = GetVelocity( self ):Length()
 	local flMultiplier = 1
 	if CurTime() <= MyTable.flSpeedUpAnimationsTime then flMultiplier = 1 / ( 1 - MyTable.flSpeedUpAnimationsWeight ) end
+
+	if self:IsOnGround() then self.flBoneActuatorsTime = math.max( self.flBoneActuatorsTime, CurTime() + 1 / 3 ) end
 
 	if f <= 12 || !self:IsOnGround() then
 	elseif f <= ( MyTable.flPowerWalkSpeed * 1.1 ) then
