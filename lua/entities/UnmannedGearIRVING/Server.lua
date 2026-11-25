@@ -7,6 +7,7 @@ ENT.bNightVision = true
 
 ENT.vHullMins = Vector( -36, -36 )
 ENT.vHullMaxs = Vector( 36, 36, 170 )
+
 ENT.vHullDuckMins = ENT.vHullMins
 ENT.vHullDuckMaxs = ENT.vHullMaxs
 
@@ -16,13 +17,7 @@ ENT.flVisionYaw = 120
 ENT.flVisionPitch = 80
 
 ENT.flBodyStiffness = 14
-ENT.flBodyDamping = -8
-
-ENT.m_flIdleSequenceWeight = .5
-ENT.m_sIdleSequence = "idle"
-//	ENT.m_sIdle2Sequence = "ref"
-
-ENT.flGravityMultiplierInAir = 2
+ENT.flBodyDamping = 8
 
 local util_ScreenShake = util.ScreenShake
 
@@ -41,7 +36,7 @@ ENT.flNextLow = 0
 function ENT:LowIfAvailable( MyTable )
 	if CurTime() <= MyTable.flNextLow then return end
 
-	MyTable.flNextLow = CurTime() + 1
+	MyTable.flNextLow = CurTime() + 3
 
 	MyTable.EmitSentence( self, { sSound = "GekkoTaunt" }, MyTable )
 	MyTable.HandleSentences( self, MyTable )
@@ -51,14 +46,14 @@ end
 
 ENT.tSequenceEvents = {
 	walk = {
-		[ .2 ] = function( self, _, flWeight )
+		[ .4 ] = function( self, _, flWeight )
 			if flWeight <= .75 then return end
 
 			self:EmitSound "GekkoStepTiptoes"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
 		end,
 
-		[ .54 ] = function( self, _, flWeight )
+		[ .9 ] = function( self, _, flWeight )
 			if flWeight <= .75 then return end
 
 			self:EmitSound "GekkoStepTiptoes"
@@ -93,18 +88,6 @@ ENT.tSequenceEvents = {
 		[ .8 ] = function( self )
 			self:EmitSound "GekkoStepJog"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
-		end
-	},
-
-	att3_unstuck = {
-		[ .58 ] = function( self )
-			self:EmitSound "GekkoStepJog"
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 2, 1, 1, 2048, true )
-		end,
-
-		[ .8 ] = function( self )
-			self:EmitSound "GekkoStepJog"
-			util_ScreenShake( self:GetPos() + self:OBBCenter(), 2, 1, 1, 2048, true )
 		end
 	},
 
@@ -164,6 +147,48 @@ ENT.tSequenceEvents = {
 			self:EmitSound "GekkoDodgeLand"
 			util_ScreenShake( self:GetPos() + self:OBBCenter(), 4, 1, 1, 1536, true )
 		end
+	},
+
+	turn_b = {
+		[ .4 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoStepTiptoes"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+		end,
+
+		[ .8 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoStepTiptoes"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+		end
+	},
+
+	turn_l = {
+		[ .4 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoStepTiptoes"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+		end,
+
+		[ .8 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoStepTiptoes"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+		end
+	},
+
+	turn_r = {
+		[ .4 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoStepTiptoes"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+		end,
+
+		[ .8 ] = function( self, _, flWeight )
+			if flWeight <= .75 then return end
+			self:EmitSound "GekkoStepTiptoes"
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 1, 1, 1, 512, true )
+		end
 	}
 }
 
@@ -210,13 +235,19 @@ function ENT:OnLandOnGround()
 	util.Effect( "GekkoLand", pData )
 
 	self:EmitSound "GekkoLand"
+	self:EmitSound "GekkoLandThud"
 
 	self.sCallMeInRunBehaviour = "Land"
 	self.fCallMeInRunBehaviour = function( self, MyTable )
 		if CurTime() <= self.flChargeTime then return true end
 
 		MyTable.AnimationSystemHalt( self, MyTable )
-		MyTable.PlaySequenceAndMove( self, "land", math.Rand( .75, 1.25 ), nil, nil, true )
+		MyTable.PlaySequenceAndMove( self, "land", math.Rand( .75, 1 ), nil, function()
+			MyTable.Look( self, MyTable )
+
+			MyTable.vaAimTargetBody = nil
+			MyTable.HandleTurning( self, MyTable )
+		end, true )
 
 		return true
 	end
@@ -232,8 +263,7 @@ function ENT:PostJumpInternal()
 
 	util_ScreenShake( vPos, 8, 40, 2.5, 4096, true )
 
-	self:EmitSound "GekkoJumpThud"
-	self:EmitSound "GekkoJumpHoovePart"
+	self:EmitSound "GekkoJumpDirt"
 	self:EmitSound "GekkoJumpHoovePart"
 	self:EmitSound "GekkoJumpHoovePart"
 end
@@ -241,18 +271,17 @@ end
 local HEAD_BONE = "bone006"
 
 ENT.flHeadStiffness = 6
-ENT.flHeadDamping = -4
+ENT.flHeadDamping = 4
 
 ENT.m_flTargetChirpVolume = 0
 
 function ENT:ChirpSoundContext()
 	self.SOUND_CONTEXT_sContext = "Cicada"
 	self.SOUND_CONTEXT_bUnableToPinpointLocation = true
+	self.SOUND_bSmoothEntry = true
 end
 
 function ENT:Think()
-	self.m_sIdleSequence = self:IsOnGround() && "idle" || "jump"
-
 	local pChirpLoop = self.m_pChirpLoop
 	if !pChirpLoop then
 		pChirpLoop = CreateSound( self, "GekkoChirpLoop" )
@@ -281,7 +310,7 @@ end
 
 ENT.flNextMachineGunShot = 0
 
-ENT.m_pActiveWeaponTemplates = {
+ENT.pActiveWeaponTemplates = {
 	MachineGun = {
 		Attachment = function() return "Head" end,
 
@@ -309,12 +338,15 @@ ENT.m_pActiveWeaponTemplates = {
 	}
 }
 
-ENT.m_pActiveBodyTemplates = {
+ENT.pActiveBodyTemplates = {
 	Head = {
 		SetAimTarget = function( self, vaAimTarget ) self.vaAimTargetPose = vaAimTarget end,
 		GetAimTarget = function( self ) return self.vaAimTargetPose end,
 
-		GetDamping = function( self ) return self.flHeadDamping end,
+		GetNormalStiffness = function( self ) return self.flHeadStiffness end,
+		SetStiffness = function( self, flStiffness ) self.flOverrideHeadStiffnessThisTick = flStiffness end,
+
+		GetNormalDamping = function( self ) return self.flHeadDamping end,
 		SetDamping = function( self, flDamping ) self.flOverrideHeadDampingThisTick = flDamping end
 	}
 }
@@ -377,9 +409,10 @@ function ENT:HandleTurning( MyTable )
 		end
 
 		local vHeadVelocity = self.vHeadVelocity
-		vHeadVelocity:Add( vDelta * self.flHeadStiffness * flFrameTime )
-		vHeadVelocity:Mul( math.exp( ( self.flOverrideHeadDampingThisTick || self.flHeadDamping ) * flFrameTime ) )
+		vHeadVelocity:Add( vDelta * ( self.flOverrideHeadStiffnessThisTick || self.flHeadStiffness ) * flFrameTime )
+		vHeadVelocity:Mul( math.exp( -( self.flOverrideHeadDampingThisTick || self.flHeadDamping ) * flFrameTime ) )
 
+		self.flOverrideHeadStiffnessThisTick = nil
 		self.flOverrideHeadDampingThisTick = nil
 
 		aHeadAngles[ 1 ] = aHeadAngles[ 1 ] + vHeadVelocity[ 1 ] * flFrameTime
@@ -387,6 +420,10 @@ function ENT:HandleTurning( MyTable )
 
 		self:ManipulateBoneAngles( iBoneID, Angle( aHeadAngles[ 2 ], 0, aHeadAngles[ 1 ] ) )
 	end
+
+	self:ApplyGoddamnBonesFix()
+
+	return BaseClass.Think( self )
 end
 
 function ENT:OnKilled( ... )
@@ -439,41 +476,6 @@ function ENT:OnKilled( ... )
 	end )
 end
 
-ENT.flTopSpeed = 512
-ENT.flJogSpeed = ENT.flTopSpeed
-ENT.flWalkSpeed = 96
-ENT.flFastWalkSpeed = 110
-ENT.flPowerWalkSpeed = 160
-
-ENT.flChargeSpeed = 820
-
-ENT.flJumpHeight = 1024
-
-ENT.flSpeedUpAnimationsTime = 0
-ENT.flSpeedUpAnimationsWeight = 0
-
-function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
-	local pLocomotion = self.loco
-	pLocomotion:SetDesiredSpeed( flSpeed )
-	local f = self.flTopSpeed * ACCELERATION_NORMAL
-	pLocomotion:SetAcceleration( f )
-	pLocomotion:SetDeceleration( f )
-	pLocomotion:SetJumpHeight( self.flJumpHeight )
-
-	local f = GetVelocity( self ):Length()
-	local flMultiplier = 1
-	if CurTime() <= self.flSpeedUpAnimationsTime then flMultiplier = 1 / ( 1 - self.flSpeedUpAnimationsWeight ) end
-
-	if f <= 12 || !self:IsOnGround() then
-	elseif f <= ( self.flPowerWalkSpeed * 1.1 ) then
-		self:PromoteSequence( "walk", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) * flMultiplier )
-	else
-		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * flMultiplier )
-	end
-
-	self:GroundMovement( pPath, flSpeed, tFilter )
-end
-
 function ENT:Stand() self.loco:SetJumpHeight( self.flJumpHeight ) BaseClass.Stand( self ) end
 
 // After playing some MGR, this is the animation that plays (I think)
@@ -520,9 +522,9 @@ RegisterSchedule( "GekkoNeuroMuscularInterfaceError", { Execute = function( self
 	// whether commands such as "turn the turret 10 degrees right" actually turn it 10 degrees, and not 5 or 20.
 	// We sometimes shake off slower or faster intentionally, to make the enemy unsure if the BMI Error is resolved
 	// NOTE: The calibration test is important! We sometimes estimate it incorrectly, as our nerves may be damaged!
-	local flLegStatus, flWrongLegPing = MyTable.flLegStatus, MyTable.flWrongLegPing
-	if flWrongLegPing <= 0 && math.random() <= math.Remap( flLegStatus ^ 3, 0, 1, .00001, 1 ) * FrameTime() then
-		if flLegStatus >= 1 then
+	local flLegIntegrity, flWrongLegPing = MyTable.flLegIntegrity, MyTable.flWrongLegPing
+	if flWrongLegPing <= 0 && math.random() <= math.Remap( flLegIntegrity ^ 3, 0, 1, .00001, 1 ) * FrameTime() then
+		if flLegIntegrity >= 1 then
 			MyTable.Schedule = nil
 			MyTable.AnimationSystemHalt( self, MyTable )
 			MyTable.PlaySequenceAndMove( self, "stun_end", math.Rand( .6, 1.4 ) )
@@ -534,15 +536,15 @@ RegisterSchedule( "GekkoNeuroMuscularInterfaceError", { Execute = function( self
 			// almost back to normal, and as such will significantly slow down the process!
 			MyTable.flWrongLegPing = math.Rand( 2, 4 )
 			MyTable.AnimationSystemHalt( self, MyTable )
-			MyTable.PlaySequenceAndMove( self, "stun_end", math.random( 2 ) == 1 && math.Rand( 1 - flLegStatus * .8, 1 - flLegStatus * .6 ) || math.Rand( 1 + flLegStatus * .6, 1 + flLegStatus * .8 ) )
+			MyTable.PlaySequenceAndMove( self, "stun_end", math.random( 2 ) == 1 && math.Rand( 1 - flLegIntegrity * .8, 1 - flLegIntegrity * .6 ) || math.Rand( 1 + flLegIntegrity * .6, 1 + flLegIntegrity * .8 ) )
 		end
 		return
 	end
 
-	MyTable.flWrongLegPing = math.Clamp( flWrongLegPing - flLegStatus * MyTable.m_flFrameTime, 0, 4 )
+	MyTable.flWrongLegPing = math.Clamp( flWrongLegPing - flLegIntegrity * MyTable.m_flFrameTime, 0, 4 )
 
 	// Keep in mind this is surprisingly fast!
-	MyTable.flLegStatus = math.Clamp( flLegStatus + 1 / 3 * MyTable.m_flFrameTime, 0, 1 )
+	MyTable.flLegIntegrity = math.Clamp( flLegIntegrity + 1 / 3 * MyTable.m_flFrameTime, 0, 1 )
 
 	// Don't ping the nervous system if we're unsure whether it already works!
 	// It will automatically get into a stable posture and perform repeating
@@ -551,34 +553,37 @@ RegisterSchedule( "GekkoNeuroMuscularInterfaceError", { Execute = function( self
 	MyTable.Stand( self )
 end } )
 
-ENT.flLegStatus = 1
+ENT.flLegIntegrity = 1
 
 function ENT:OnTakeDamage( dDamage )
-	dDamage:ScaleDamage( math.Clamp( dDamage:GetDamage() / 600, 0, 1 ) )
+	dDamage:ScaleDamage( math.Clamp( dDamage:GetDamage() / 800, 0, 1 ) )
 
 	local flHealth = Lerp( .25, self:Health(), self:GetMaxHealth() )
 
 	if dDamage:IsDamageType( DMG_CLUB ) then flHealth = flHealth * 24 end
 
-	local f = math.Clamp( self.flLegStatus - dDamage:GetDamage() / flHealth * 4, 0, 1 )
-	self.flLegStatus = f
+	local f = math.Clamp( self.flLegIntegrity - dDamage:GetDamage() / flHealth * .25, 0, 1 )
+	self.flLegIntegrity = f
 
 	local pSchedule = self.Schedule
 	if !( pSchedule && pSchedule.m_sName == "GekkoNeuroMuscularInterfaceError" ) then
-		if self.flLegStatus <= math.Rand( 0, dDamage:GetDamage() / flHealth * 100 ) then self:SetSchedule "GekkoNeuroMuscularInterfaceError" end
+		if self.flLegIntegrity <= math.Rand( 0, dDamage:GetDamage() / flHealth * 5 ) then self:SetSchedule "GekkoNeuroMuscularInterfaceError" end
 	end
 
 	return BaseClass.OnTakeDamage( self, dDamage )
 end
 
-// Abrupt speaker cut
+// Abrupt cut
 function ENT:GekkoChirpControllerSet( flVolume ) self.m_flTargetChirpVolume = flVolume end
 
-// Abrupt speaker stop
+// Abrupt stop
 function ENT:GekkoChirpControllerCombat( MyTable ) ( MyTable || self ).m_flTargetChirpVolume = 0 end
 
 ENT.m_flRandomTargetChirpVolumeCurrent = 1
 ENT.m_flRandomTargetChirpVolumeTarget = 1
+
+ENT.m_flRandomTargetChirpVolumeChangeSpeedCurrent = 1
+ENT.m_flRandomTargetChirpVolumeChangeSpeedTarget = 1
 
 // Calm raise to pretend to be a swarm of cicadas
 function ENT:GekkoChirpControllerRaise( MyTable, flFrameTime )
@@ -590,13 +595,19 @@ end
 function ENT:GekkoChirpControllerRandom( MyTable, flFrameTime )
 	MyTable = MyTable || self
 
-	MyTable.m_flRandomTargetChirpVolumeCurrent = math.Approach( MyTable.m_flRandomTargetChirpVolumeCurrent, MyTable.m_flRandomTargetChirpVolumeTarget, 1 / 3 * flFrameTime )
+	MyTable.m_flRandomTargetChirpVolumeChangeSpeedCurrent = math.Approach( MyTable.m_flRandomTargetChirpVolumeChangeSpeedCurrent, MyTable.m_flRandomTargetChirpVolumeChangeSpeedTarget, flFrameTime )
+
+	if math.random() <= .1 * flFrameTime then
+		MyTable.m_flRandomTargetChirpVolumeChangeSpeedTarget = math.Rand( .2, 1 )
+	end
+
+	MyTable.m_flRandomTargetChirpVolumeCurrent = math.Approach( MyTable.m_flRandomTargetChirpVolumeCurrent, MyTable.m_flRandomTargetChirpVolumeTarget, MyTable.m_flRandomTargetChirpVolumeChangeSpeedCurrent * flFrameTime )
 
 	if math.random() <= .1 * flFrameTime then
 		MyTable.m_flRandomTargetChirpVolumeTarget = math.Rand( .2, 1 )
 	end
 
-	MyTable.m_flTargetChirpVolume = math.Approach( MyTable.m_flTargetChirpVolume, MyTable.m_flRandomTargetChirpVolumeCurrent, flFrameTime )
+	MyTable.m_flTargetChirpVolume = math.Approach( MyTable.m_flTargetChirpVolume, MyTable.m_flRandomTargetChirpVolumeCurrent, 2 * flFrameTime )
 end
 
 // Calm stop to cut out while still pretending to be a swarm of cicadas
@@ -624,9 +635,6 @@ ENT.Dodge = {
 		Perform = function( self, MyTable, flMultiplier )
 			MyTable.AnimationSystemHalt( self, MyTable )
 			MyTable.PlaySequenceAndMove( self, "dodge_l", flMultiplier, nil, function()
-				local pEnemy = MyTable.Enemy
-				if IsValid( pEnemy ) then MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter() end
-
 				MyTable.Look( self, MyTable )
 				MyTable.HandleTurning( self, MyTable )
 			end )
@@ -652,9 +660,6 @@ ENT.Dodge = {
 		Perform = function( self, MyTable, flMultiplier )
 			MyTable.AnimationSystemHalt( self, MyTable )
 			MyTable.PlaySequenceAndMove( self, "dodge_r", flMultiplier, nil, function()
-				local pEnemy = MyTable.Enemy
-				if IsValid( pEnemy ) then MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter() end
-
 				MyTable.Look( self, MyTable )
 				MyTable.HandleTurning( self, MyTable )
 			end )
@@ -680,9 +685,6 @@ ENT.Dodge = {
 		Perform = function( self, MyTable, flMultiplier )
 			MyTable.AnimationSystemHalt( self, MyTable )
 			MyTable.PlaySequenceAndMove( self, "dodge_b", flMultiplier, nil, function()
-				local pEnemy = MyTable.Enemy
-				if IsValid( pEnemy ) then MyTable.vaAimTargetPose = pEnemy:GetPos() + pEnemy:OBBCenter() end
-
 				MyTable.Look( self, MyTable )
 				MyTable.HandleTurning( self, MyTable )
 			end )
@@ -724,3 +726,4 @@ ENT.m_sDefaultShareAlertSchedule = "UnmannedGearIRVINGShareAlert"
 include "Combat.lua"
 include "InspectFirearm.lua"
 include "Control.lua"
+include "Locomotion.lua"

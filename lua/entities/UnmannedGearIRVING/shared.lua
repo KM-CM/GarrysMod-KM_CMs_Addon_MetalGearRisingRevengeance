@@ -55,12 +55,13 @@ sound.Add {
 	sound = "physics/concrete/concrete_break3.wav"
 }
 
+// TODO: This is supposed to be the dirt sound, and should be replaced with E3 trailer lol
 sound.Add {
-	name = "GekkoJumpThud",
+	name = "GekkoJumpDirt",
 	channel = CHAN_STATIC,
 	level = 100,
-	pitch = { 90, 110 },
-	volume = .3,
+	pitch = { 80, 100 },
+	volume = .5,
 	sound = "^Gekko/Thud.wav"
 }
 
@@ -80,7 +81,20 @@ sound.Add {
 	name = "GekkoLand",
 	channel = CHAN_STATIC,
 	level = 110,
-	pitch = { 90, 110 },
+	pitch = { 80, 100 },
+	volume = .5,
+	sound = {
+		"Gekko/Land1.wav",
+		"Gekko/Land2.wav",
+		"Gekko/Land3.wav"
+	}
+}
+
+sound.Add {
+	name = "GekkoLandThud",
+	channel = CHAN_STATIC,
+	level = 110,
+	pitch = { 80, 100 },
 	sound = "^Gekko/Thud.wav"
 }
 
@@ -108,9 +122,7 @@ sound.Add {
 		"Gekko/Taunt4.wav",
 		"Gekko/Taunt5.wav",
 		"Gekko/Taunt6.wav",
-		"Gekko/Taunt7.wav",
-		"Gekko/Taunt8.wav",
-		"Gekko/Taunt9.wav"
+		"Gekko/Taunt7.wav"
 	}
 }
 
@@ -187,15 +199,15 @@ sound.Add {
 }
 
 sound.Add {
-	name = "GekkoAck",
+	name = "GekkoGrunt",
 	channel = CHAN_VOICE,
 	level = 100,
 	pitch = { 75, 100 },
 	sound = {
-		"^Gekko/Ack1.wav",
-		"^Gekko/Ack2.wav",
-		"^Gekko/Ack3.wav",
-		"^Gekko/Ack4.wav"
+		"^Gekko/Grunt1.wav",
+		"^Gekko/Grunt2.wav",
+		"^Gekko/Grunt3.wav",
+		"^Gekko/Grunt4.wav"
 	}
 }
 

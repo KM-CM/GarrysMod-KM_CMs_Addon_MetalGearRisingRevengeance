@@ -1,3 +1,6 @@
+// NOTE: This is a TODO, some attacks are missing,
+// some need to be remade up to standard, etc
+
 function ENT:ControlledHandleDodging( MyTable, pController )
 	if bit.band( pController.CONTROL_iButtons || 0, IN_RELOAD ) != 0 then
 		if bit.band( pController.CONTROL_iButtons || 0, IN_MOVELEFT ) != 0 then
@@ -74,10 +77,10 @@ function ENT:HandleControl( MyTable, pController )
 			MyTable.AnimationSystemHalt( self, MyTable )
 
 			local sWarmupSequence = "att2_1"
-			local flWarmupMultiplier = math.Rand( .75, 1.25 )
+			local flWarmupMultiplier = math.Rand( .75, 1 )
 		
 			local sSequence = "att2_2"
-			local flMultiplier = math.Rand( 2 / 3, 1 + 1 / 3 )
+			local flMultiplier = flWarmupMultiplier
 		
 			MyTable.MELEE_flStart = CurTime()
 			MyTable.MELEE_flHit = CurTime() + self:SequenceDuration( sWarmupSequence ) / flWarmupMultiplier + .1 / flMultiplier
@@ -101,13 +104,13 @@ function ENT:HandleControl( MyTable, pController )
 
 			local bInterrupt
 
-			MyTable.PlaySequenceAndMove( self, sWarmupSequence, flWarmupMultiplier, nil, function()
+			MyTable.PlaySequenceAndMove( self, sWarmupSequence, flWarmupMultiplier, true, function()
 				if !IsValid( pController ) then return end
 				if MyTable.ControlledHandleDodging( self, MyTable, pController ) then
 					bInterrupt = true
 					return true
 				end
-			end, nil, nil, true )
+			end, nil, nil, 0 )
 
 			if bInterrupt then return end
 
@@ -233,7 +236,7 @@ function ENT:HandleControl( MyTable, pController )
 	end
 
 	if bit.band( pController.CONTROL_iButtons || 0, IN_ATTACK ) != 0 then
-		FireWeapon( self, "MachineGun", MyTable.m_pActiveWeaponTemplates.MachineGun )
+		FireWeapon( self, "MachineGun", MyTable.pActiveWeaponTemplates.MachineGun )
 	end
 
 	if bit.band( pController.CONTROL_iButtons || 0, IN_USE ) != 0 then

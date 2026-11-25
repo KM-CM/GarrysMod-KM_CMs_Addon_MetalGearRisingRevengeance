@@ -99,7 +99,7 @@ function ENT:GrantDefaultSkills()
 end
 
 ENT.flBodyStiffness = 4
-ENT.flBodyDamping = -12
+ENT.flBodyDamping = 12
 
 function ENT:Initialize()
 	self:SetModel "models/dughoo/mgrr2025/grad.mdl"
@@ -241,10 +241,10 @@ function ENT:FireCannon()
 end
 
 ENT.flKordStiffness = 24
-ENT.flKordDamping = -4
+ENT.flKordDamping = 4
 
 ENT.flCannonStiffness = 16
-ENT.flCannonDamping = -4
+ENT.flCannonDamping = 4
 
 ENT.flLastCustomBodyYaw = 0
 
@@ -302,7 +302,7 @@ function ENT:Think( ... )
 			math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ),
 			math.AngleDifference( aDesAim[ 2 ], aCurrentAngles[ 2 ] )
 		) * self.flCannonStiffness * FrameTime() )
-		vCannonVelocity:Mul( math.exp( self.flCannonDamping * FrameTime() ) )
+		vCannonVelocity:Mul( math.exp( -self.flCannonDamping * FrameTime() ) )
 
 		aCannonAngles[ 1 ] = aCannonAngles[ 1 ] + vCannonVelocity[ 1 ] * FrameTime()
 		aCannonAngles[ 2 ] = aCannonAngles[ 2 ] + vCannonVelocity[ 2 ] * FrameTime()
@@ -337,7 +337,7 @@ function ENT:Think( ... )
 			math.AngleDifference( aDesAim[ 1 ], aCurrentAngles[ 1 ] ),
 			math.AngleDifference( aDesAim[ 2 ], aCurrentAngles[ 2 ] )
 		) * self.flKordStiffness * FrameTime() )
-		vKordVelocity:Mul( math.exp( self.flKordDamping * FrameTime() ) )
+		vKordVelocity:Mul( math.exp( -self.flKordDamping * FrameTime() ) )
 
 		aKordAngles[ 1 ] = aKordAngles[ 1 ] + vKordVelocity[ 1 ] * FrameTime()
 		aKordAngles[ 2 ] = aKordAngles[ 2 ] + vKordVelocity[ 2 ] * FrameTime()

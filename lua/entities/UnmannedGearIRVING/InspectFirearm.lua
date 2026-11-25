@@ -49,7 +49,7 @@ RegisterSchedule( "GekkoInspectFirearm", { Execute = function( self, pSchedule, 
 	if !pSchedule.bAcked then
 		pSchedule.bAcked = true
 
-		MyTable.EmitSentence( self, { sSound = "GekkoAck" }, MyTable )
+		MyTable.EmitSentence( self, { sSound = "GekkoGrunt" }, MyTable )
 
 		MyTable.HandleSentences( self, MyTable )
 

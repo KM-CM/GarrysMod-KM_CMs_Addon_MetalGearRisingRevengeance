@@ -5,12 +5,13 @@ if !CLASS_DESPERADO_WORLD_MARSHAL then Add_NPC_Class "CLASS_DESPERADO_WORLD_MARS
 ENT.m_iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
 ENT.m_sIdleSequence = "idle"
+ENT.m_sIdleSequenceAir = "fly_loop"
 
 ENT.vHullMins = Vector( -200, -200, 0 )
 ENT.vHullMaxs = Vector( 200, 200, 800 )
 
 ENT.flBodyStiffness = 2
-ENT.flBodyDamping = -8
+ENT.flBodyDamping = 8
 
 ENT.flGravityMultiplierInAir = 1.5
 
@@ -18,6 +19,12 @@ ENT.bCannotCarryWeapons = true
 
 ENT.flVisionYaw = 120
 ENT.flVisionPitch = 80
+
+function ENT:OnTakeDamage( dDamage )
+	dDamage:ScaleDamage( math.Clamp( dDamage:GetDamage() / 2000, 0, 1 ) )
+
+	return BaseClass.OnTakeDamage( self, dDamage )
+end
 
 local LEFT_FOOT_BONE = "bone032"
 local RIGHT_FOOT_BONE = "bone043"
@@ -40,6 +47,7 @@ ENT.tSequenceEvents = {
 			self:EmitSound "MetalGearRAYWalkHydraulics"
 
 			self.SOUND_vOrigin = vFoot
+			self.SOUND_flFakeTerrorDecibels = 150
 			self:EmitSound "MetalGearRAYWalkStep"
 
 			local pData = EffectData()
@@ -71,6 +79,7 @@ ENT.tSequenceEvents = {
 			self:EmitSound "MetalGearRAYWalkHydraulics"
 
 			self.SOUND_vOrigin = vFoot
+			self.SOUND_flFakeTerrorDecibels = 150
 			self:EmitSound "MetalGearRAYWalkStep"
 
 			local pData = EffectData()
@@ -103,6 +112,8 @@ function ENT:Initialize()
 	self.aHeadAngles = Angle()
 	self.vHeadVelocity = Vector()
 
+	self:SetBloodColor( BLOOD_COLOR_MECH )
+
 	BaseClass.Initialize( self )
 end
 
@@ -123,6 +134,7 @@ function ENT:OnLandOnGround()
 			if !bLanded then
 				bLanded = true
 
+				self.SOUND_flFakeTerrorDecibels = 200
 				self:EmitSound "MetalGearRAYLand"
 			end
 
@@ -185,14 +197,9 @@ function ENT:OnLandOnGround()
 	end
 end
 
-function ENT:Think()
-	self.m_sIdleSequence = self:IsOnGround() && "idle" || "fly_loop"
-end
-
 ENT.flTopSpeed = 500
 ENT.flJogSpeed = ENT.flTopSpeed
 ENT.flPowerWalkSpeed = 500
-ENT.flFastWalkSpeed = 320
 ENT.flWalkSpeed = 280
 
 // TODO: This REALLY needs root motion. Sadly, I have no idea how to implement it :(

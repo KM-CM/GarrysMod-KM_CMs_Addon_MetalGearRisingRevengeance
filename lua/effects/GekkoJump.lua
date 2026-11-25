@@ -5,8 +5,7 @@ function EFFECT:Init( pData )
 
 	FX_EjectaCloud {
 		vOrigin = vPos,
-		flMagnitude = 896,
-		flStrengthOverride = 768
+		flMagnitude = 896
 	}
 end
 
