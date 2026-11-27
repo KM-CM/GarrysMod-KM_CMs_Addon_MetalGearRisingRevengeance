@@ -11,9 +11,9 @@ function ENT:OhBoyItsTimeToJump( pEnemy, MyTable, fOnComplete )
 end
 
 function ENT:Taunt( pEnemy, MyTable )
-	local flMultiplier = math.Rand( .75, 1.1 )
+	local flMultiplier = math.Rand( 1, 1.25 )
 
-	timer.Simple( .8 / flMultiplier, function()
+	timer.Simple( 1 / flMultiplier, function()
 		if !IsValid( self ) then return end
 		util.ScreenShake( self:GetPos() + self:OBBCenter(), 8, 40, 2, 4096, true )
 		self:EmitSound "GekkoTaunt"
@@ -149,7 +149,7 @@ RegisterSchedule( "GekkoCharge", {
 		if !pEnemyPath then pEnemyPath = Path "Follow" MyTable.pEnemyPath = pEnemyPath end
 	
 		MyTable.ManageFlankPath( self, pEnemyPath, pEnemy, pSchedule, MyTable )
-	
+
 		if !pSchedule.m_bInitialized then
 			if !IsValid( pEnemy ) then return true end
 	
@@ -198,7 +198,10 @@ RegisterSchedule( "GekkoCharge", {
 				pSchedule.flJumpChance = math.Rand( .08, .2 )
 			else pSchedule.flJumpChance = math.Rand( .04, .08 ) end
 		end
-	
+
+		MyTable.LATW_flValidTime = CurTime() + 1 / 3
+		MyTable.LATW_sActivity = "Charge"
+
 		if !IsValid( pEnemy ) then
 			MyTable.EndChargeInternal( self, pSchedule, MyTable )
 	
@@ -306,6 +309,8 @@ RegisterSchedule( "GekkoAttackRoundhouse", { Execute = function( self, pSchedule
 
 	local sSequence = "att1_2"
 	local flMultiplier = math.Rand( .4, .45 )
+
+	MyTable.LAT_flAmount = MyTable.LAT_flAmount + .205 * flMultiplier
 
 	MyTable.MELEE_flStart = CurTime()
 	MyTable.MELEE_flHit = CurTime() + self:SequenceDuration( sWarmupSequence ) / flWarmupMultiplier + .1 / flMultiplier
@@ -459,6 +464,8 @@ RegisterSchedule( "GekkoAttackStraight", { Execute = function( self, pSchedule, 
 	local sSequence = "att2_2"
 	local flMultiplier = flWarmupMultiplier
 
+	MyTable.LAT_flAmount = MyTable.LAT_flAmount + .115 * flMultiplier
+
 	MyTable.MELEE_flStart = CurTime()
 	MyTable.MELEE_flHit = CurTime() + self:SequenceDuration( sWarmupSequence ) / flWarmupMultiplier + .1 / flMultiplier
 	MyTable.MELEE_flEnd = CurTime() + self:SequenceDuration( sWarmupSequence ) / flWarmupMultiplier + self:SequenceDuration( sSequence ) / flMultiplier
@@ -582,6 +589,8 @@ RegisterSchedule( "GekkoStomp", { Execute = function( self, pSchedule, MyTable )
 	MyTable.MELEE_flEnd = CurTime() + self:SequenceDuration( self:LookupSequence "stomp1" ) / flWarmupMultiplier + self:SequenceDuration( self:LookupSequence "stomp2" ) / flMultiplier
 	MyTable.MELEE_flRadius = MyTable.GetStompDamageRadius( self )
 	MyTable.MELEE_flDamage = 3072
+
+	MyTable.LAT_flAmount = MyTable.LAT_flAmount + .245 * flMultiplier
 
 	MyTable.AnimationSystemHalt( self, MyTable )
 
@@ -781,6 +790,7 @@ end
 
 ENT.flDesiredAttackTime = -1
 
+// TODO: This needs a hull check in the general direction of the enemy
 function ENT:CheckAndDoDumbMelee( MyTable, pEnemy, pTrueEnemy )
 	if CurTime() > MyTable.flDesiredAttackTime then
 		MyTable.sDesiredAttack = math.random( 1, 3 ) == 1 && "GekkoStomp" || ( math.random( 2 ) == 1 && "GekkoAttackRoundhouse" || "GekkoAttackStraight" )
@@ -789,7 +799,7 @@ function ENT:CheckAndDoDumbMelee( MyTable, pEnemy, pTrueEnemy )
 
 	local sDesiredAttack = MyTable.sDesiredAttack
 
-	local flStomp = MyTable.GetStompDamageRadius( self ) * ( sDesiredAttack == "GekkoAttackRoundhouse" && 1.5 || sDesiredAttack == "GekkoStomp" && 2 || 2.5 )
+	local flStomp = MyTable.GetStompDamageRadius( self ) * ( sDesiredAttack == "GekkoAttackRoundhouse" && 1.25 || sDesiredAttack == "GekkoStomp" && 2 || 2.5 )
 
 	local bStomp
 

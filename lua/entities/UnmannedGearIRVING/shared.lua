@@ -12,6 +12,17 @@ ENT.CATEGORIZE = { Gekko = true, IRVING = true }
 ENT.__CONTROLLABLE__ = true
 
 sound.Add {
+	name = "GekkoExcrementSplash",
+	sound = {
+		"vehicles/airboat/pontoon_splash1.wav",
+		"vehicles/airboat/pontoon_splash2.wav"
+	},
+	level = 90,
+	pitch = { 100, 120 },
+	channel = CHAN_STATIC
+}
+
+sound.Add {
 	name = "GekkoImpact",
 	channel = CHAN_AUTO,
 	volume = 1,

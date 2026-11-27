@@ -13,9 +13,6 @@ ENT.bCannotCarryWeapons = true
 ENT.flVisionYaw = 120
 ENT.flVisionPitch = 80
 
-ENT.flBodyStiffness = 14
-ENT.flBodyDamping = 8
-
 local util_ScreenShake = util.ScreenShake
 
 NOT_A_VOICELINE[ "Gekko/StepA.wav" ] = true
@@ -190,6 +187,8 @@ ENT.tSequenceEvents = {
 }
 
 function ENT:Initialize()
+	if self.LAT_flAmount == -1 then self.LAT_flAmount = math.random() * ( self.LAT_flTauntPurgeMax || ( self.LAT_flSize * .5 ) ) end
+
 	self:SetHealth( 16384 )
 	self:SetMaxHealth( 16384 )
 	self:SetCollisionBounds( self.vHullMins, self.vHullMaxs )
@@ -203,6 +202,8 @@ ENT.flChargeTime = 0
 
 function ENT:OnLandOnGround()
 	if self.sCallMeInRunBehaviour == "Land" || self.sCallMeInRunBehaviour == "land" then return end
+
+	self.LAT_flAmount = self.LAT_flAmount + .3
 
 	local vPos = self:GetPos()
 
@@ -259,6 +260,8 @@ function ENT:PostJumpInternal()
 	util.Effect( "GekkoJump", pData )
 
 	util_ScreenShake( vPos, 8, 40, 2.5, 4096, true )
+
+	self.LAT_flAmount = self.LAT_flAmount + .38
 
 	self:EmitSound "GekkoJumpDirt"
 	self:EmitSound "GekkoJumpHoovePart"
@@ -693,36 +696,67 @@ ENT.Dodge = {
 	}
 }
 
-RegisterSchedule( "UnmannedGearIRVINGShareAlert", { Execute = function( self, pSchedule, MyTable )
+local function fGetShareAlertExcreteChance( MyTable )
+	local flAmount = MyTable.LAT_flAmount
+	local flFloor = MyTable.LAT_flManifoldFloor
+	local flCrit = MyTable:LAT_GetCritical()
+
+	if flAmount <= flFloor then return 0 end
+	if flAmount >= flCrit then return 1 end
+
+	local flRatio = ( flAmount - flFloor ) / ( flCrit - flFloor )
+	return math.Clamp( .24 + .76 * ( flRatio ^ .55 ), 0, 1 )
+end
+
+local function fCalcShareAlertVoid( MyTable )
+	local flAmount = MyTable.LAT_flAmount
+
+	if flAmount >= MyTable.LAT_flSize * .72 && math.random() < .85 then return flAmount end
+
+	local flResidual = flAmount < 18 && math.Rand( .8, 1.5 ) || ( MyTable.LAT_flResidualMin * math.Rand( .75, 1.15 ) )
+	local flVoidable = math.max( 0, flAmount - flResidual )
+	local flVoidFraction = math.Rand( .82, 0.95 )
+
+	return math.min( flVoidable * flVoidFraction, flAmount )
+end
+
+RegisterSchedule( "GekkoShareAlert", { Execute = function( self, pSchedule, MyTable )
 	MyTable.EScheduleState = ACTOR_STATE_ALERT
 
-	local flMultiplier = math.Rand( .8, 1 )
-
-	timer.Simple( .8 / flMultiplier, function()
-		if !IsValid( self ) then return end
-
+	local function fBroadcastAlert()
 		local pAlly = pSchedule.pAlly
 		if IsValid( pAlly ) then MyTable.ShareAlertContext( self, pAlly, MyTable ) end
-
-		util_ScreenShake( self:GetPos() + self:OBBCenter(), 8, 40, 2, 4096, true )
 
 		MyTable.SOUND_CONTEXT_fCallOnAllHearers = function( pHearer )
 			if pHearer.__ACTOR__ && MyTable.Disposition( self, pHearer ) == D_LI then
 				MyTable.ShareAlertContext( self, pHearer, MyTable )
 			end
 		end
+	end
 
-		self:EmitSound "GekkoTaunt"
-	end )
+	if MyTable.LAT_flAmount && math.random() < fGetShareAlertExcreteChance( MyTable ) then
+		MyTable.TauntExcrete( self, fCalcShareAlertVoid( MyTable ), MyTable, nil, fBroadcastAlert )
+	else
+		local flMultiplier = math.Rand( .8, 1 )
 
-	MyTable.AnimationSystemHalt( self, MyTable )
+		timer.Simple( .8 / flMultiplier, function()
+			if !IsValid( self ) then return end
 
-	MyTable.PlaySequenceAndWait( self, "taunt", flMultiplier )
+			fBroadcastAlert()
+
+			util_ScreenShake( self:GetPos() + self:OBBCenter(), 8, 40, 2, 4096, true )
+			self:EmitSound "GekkoTaunt"
+		end )
+
+		MyTable.AnimationSystemHalt( self, MyTable )
+
+		MyTable.PlaySequenceAndWait( self, "taunt", flMultiplier )
+	end
 
 	MyTable.SetSchedule( self, "Alert", MyTable )
 end } )
 
-ENT.m_sDefaultShareAlertSchedule = "UnmannedGearIRVINGShareAlert"
+ENT.m_sDefaultShareAlertSchedule = "GekkoShareAlert"
 
 include "Combat.lua"
 include "InspectFirearm.lua"

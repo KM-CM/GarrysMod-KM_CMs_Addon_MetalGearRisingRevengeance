@@ -3,8 +3,11 @@ ENT.m_sIdleSequenceAir = "jump"
 
 ENT.flGravityMultiplierInAir = 3
 
+ENT.flBodyStiffness = 14
+ENT.flBodyDamping = 10
+
 ENT.vHullMins = Vector( -30, -30 )
-ENT.vHullMaxs = Vector( 30, 30, 150 )
+ENT.vHullMaxs = Vector( 30, 30, 160 )
 
 function ENT:ForceTurnAroundLeft( MyTable )
 	MyTable.flBoneActuatorsTime = 0
@@ -78,8 +81,22 @@ function ENT:MoveAlongPath( pPath, flSpeed, flHeight, tFilter, bAllowSliding, fl
 
 	if !self:IsOnGround() then
 	elseif flSpeed <= ( self.flPowerWalkSpeed * 1.1 ) then
+		if flSpeed <= self.flWalkSpeed * 1.1 then
+			self.LATW_flValidTime = CurTime() + 1 / 3
+			self.LATW_sActivity = "Walk"
+		elseif flSpeed <= self.flFasterWalkSpeed then
+			self.LATW_flValidTime = CurTime() + 1 / 3
+			self.LATW_sActivity = "FasterWalk"
+		else
+			self.LATW_flValidTime = CurTime() + 1 / 3
+			self.LATW_sActivity = "PowerWalk"
+		end
+
 		self:DoRootMotion( "walk", flSpeed * flMultiplier )
 	else
+		self.LATW_flValidTime = CurTime() + 1
+		self.LATW_sActivity = "Sprint"
+
 		self:DoRootMotion( "run", flSpeed * flMultiplier )
 	end
 
