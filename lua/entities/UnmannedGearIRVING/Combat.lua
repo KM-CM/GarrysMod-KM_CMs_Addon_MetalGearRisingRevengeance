@@ -267,8 +267,9 @@ RegisterSchedule( "GekkoCharge", {
 		end
 	end,
 
-	OnLeave = function( self, pSchedule, MyTable )
-		if !pSchedule.m_bInitialized then return end
+	OnLeave = function( self, pSchedule, MyTable, pNew )
+		if !pSchedule.m_bInitialized || pNew.m_sName == "GekkoInterceptJump" then return end
+
 		MyTable.sCallMeInRunBehaviour = "GekkoChargeLeave"
 		MyTable.fCallMeInRunBehaviour = function()
 			MyTable.EndChargeInternal( self, pSchedule, MyTable )
@@ -786,7 +787,9 @@ function ENT:CheckAndDoDumbMelee( MyTable, pEnemy, pTrueEnemy )
 		MyTable.flDesiredAttackTime = CurTime() + math.random() * math.random() * 16
 	end
 
-	local flStomp = MyTable.GetStompDamageRadius( self ) * ( MyTable.sDesiredAttack == "GekkoAttackRoundhouse" && 1.5 || 2.5 )
+	local sDesiredAttack = MyTable.sDesiredAttack
+
+	local flStomp = MyTable.GetStompDamageRadius( self ) * ( sDesiredAttack == "GekkoAttackRoundhouse" && 1.5 || sDesiredAttack == "GekkoStomp" && 2 || 2.5 )
 
 	local bStomp
 
@@ -810,6 +813,6 @@ function ENT:CheckAndDoDumbMelee( MyTable, pEnemy, pTrueEnemy )
 		MyTable.sDesiredAttack = nil
 		MyTable.flDesiredAttackTime = -1
 
-		return MyTable.SetSchedule( self, MyTable.sDesiredAttack, MyTable )
+		return MyTable.SetSchedule( self, sDesiredAttack, MyTable )
 	end
 end

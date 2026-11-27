@@ -51,13 +51,13 @@ function ENT:ForceTurnRight( MyTable )
 	end, nil, f, f )
 end
 
-ENT.flTopSpeed = 313.5
+ENT.flTopSpeed = 512
 ENT.flJogSpeed = ENT.flTopSpeed
-ENT.flWalkSpeed = 120
-ENT.flFasterWalkSpeed = 135
-ENT.flPowerWalkSpeed = 150
+ENT.flWalkSpeed = 70
+ENT.flFasterWalkSpeed = 87
+ENT.flPowerWalkSpeed = 100
 
-ENT.flChargeSpeed = 500
+ENT.flChargeSpeed = 820
 
 ENT.flJumpHeight = 1536
 
