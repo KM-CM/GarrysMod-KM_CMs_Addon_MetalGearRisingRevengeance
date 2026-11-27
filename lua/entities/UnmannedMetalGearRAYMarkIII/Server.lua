@@ -220,7 +220,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 		self:PromoteSequence( "walk", flVelocity / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) )
 	end
 	
-	self:GroundMovement( pPath, flSpeed, tFilter )
+	self:GroundMovement( pPath, tFilter )
 end
 
 ENT.m_sDefaultCombatSchedule = "IntimidationWalk"

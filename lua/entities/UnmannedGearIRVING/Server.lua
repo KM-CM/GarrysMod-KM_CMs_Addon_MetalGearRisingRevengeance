@@ -5,9 +5,6 @@ ENT.m_iDefaultClass = CLASS_DESPERADO_WORLD_MARSHAL
 
 ENT.bNightVision = true
 
-ENT.vHullMins = Vector( -36, -36 )
-ENT.vHullMaxs = Vector( 36, 36, 170 )
-
 ENT.vHullDuckMins = ENT.vHullMins
 ENT.vHullDuckMaxs = ENT.vHullMaxs
 
@@ -298,6 +295,8 @@ function ENT:Think()
 		pChirpLoop:ChangePitch( math.Rand( 95, 105 ) )
 	end
 
+	self:ApplyGoddamnBonesFix()
+
 	return BaseClass.Think( self )
 end
 
@@ -422,10 +421,6 @@ function ENT:HandleTurning( MyTable )
 
 		self:ManipulateBoneAngles( iBoneID, Angle( aHeadAngles[ 2 ], 0, aHeadAngles[ 1 ] ) )
 	end
-
-	self:ApplyGoddamnBonesFix()
-
-	return BaseClass.Think( self )
 end
 
 function ENT:OnKilled( ... )
@@ -479,7 +474,7 @@ function ENT:OnKilled( ... )
 end
 
 function ENT:Stand()
-	if self:IsOnGround() then self.flBoneActuatorsTime = CurTime() + 1 / 3 end
+	if self:IsOnGround() then self.flBoneActuatorsTime = math.max( self.flBoneActuatorsTime, CurTime() + .2 ) end
 	self.loco:SetJumpHeight( self.flJumpHeight )
 	BaseClass.Stand( self )
 end
@@ -701,7 +696,7 @@ ENT.Dodge = {
 RegisterSchedule( "UnmannedGearIRVINGShareAlert", { Execute = function( self, pSchedule, MyTable )
 	MyTable.EScheduleState = ACTOR_STATE_ALERT
 
-	local flMultiplier = math.Rand( .75, 1.25 )
+	local flMultiplier = math.Rand( .8, 1 )
 
 	timer.Simple( .8 / flMultiplier, function()
 		if !IsValid( self ) then return end
@@ -733,3 +728,4 @@ include "Combat.lua"
 include "InspectFirearm.lua"
 include "Control.lua"
 include "Locomotion.lua"
+include "LacticAcidTank.lua"

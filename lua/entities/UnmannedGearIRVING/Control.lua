@@ -175,38 +175,8 @@ function ENT:HandleControl( MyTable, pController )
 			MyTable.Dodge.DodgeRight.Perform( self, MyTable, 1 )
 		elseif bit.band( pController.CONTROL_iButtons || 0, IN_BACK ) != 0 then
 			MyTable.Dodge.DodgeBack.Perform( self, MyTable, 1 )
-		else
-			MyTable.EScheduleState = ACTOR_STATE_ALERT
-
-			MyTable.tAlertContext = { flEnemySeen = CurTime() }
-
-			local flMultiplier = math.Rand( .75, 1.25 )
-		
-			timer.Simple( .8 / flMultiplier, function()
-				if !IsValid( self ) then return end
-	
-				util.ScreenShake( self:GetPos() + self:OBBCenter(), 8, 40, 2, 4096, true )
-		
-				MyTable.SOUND_CONTEXT_fCallOnAllHearers = function( pHearer )
-					if pHearer.__ACTOR__ && MyTable.Disposition( self, pHearer ) == D_LI then
-						MyTable.ShareAlertContext( self, pHearer, MyTable )
-					end
-				end
-		
-				self:EmitSound "GekkoTaunt"
-			end )
-		
-			MyTable.AnimationSystemHalt( self, MyTable )
-		
-			MyTable.PlaySequenceAndWait( self, "taunt", flMultiplier, nil, function()
-				if !IsValid( pController ) then return end
-				if MyTable.ControlledHandleDodging( self, MyTable, pController ) then
-					return true
-				end
-			end )
-
-			MyTable.SetSchedule( self, "Alert", MyTable )
 		end
+
 		return
 	end
 
@@ -223,8 +193,11 @@ function ENT:HandleControl( MyTable, pController )
 	local flMultiplier = 1
 	if CurTime() <= MyTable.flSpeedUpAnimationsTime then flMultiplier = 1 / ( 1 - MyTable.flSpeedUpAnimationsWeight ) end
 
-	if self:IsOnGround() then self.flBoneActuatorsTime = math.max( self.flBoneActuatorsTime, CurTime() + 1 / 3 ) end
+	if self:IsOnGround() then self.flBoneActuatorsTime = math.max( self.flBoneActuatorsTime, CurTime() + .2 ) end
 
+	// TODO: This isn't root motion. But... if we allow root motion,
+	// how do we prevent it from playing while walking into walls?
+	// We can't just check f 'cuz the Gekko can slow down to 0...
 	if f <= 12 || !self:IsOnGround() then
 	elseif f <= ( MyTable.flPowerWalkSpeed * 1.1 ) then
 		MyTable.PromoteSequence( self, "walk", f / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) * flMultiplier )

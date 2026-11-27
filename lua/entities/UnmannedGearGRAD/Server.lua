@@ -160,7 +160,7 @@ function ENT:MoveAlongPath( pPath, flSpeed, _, tFilter )
 		//	elseif flDifference <= 135 || flDifference > 0 then self:PromoteSequence "dash_r"
 		//	else self:PromoteSequence "dash_b" end
 	end
-	self:GroundMovement( pPath, flSpeed, tFilter )
+	self:GroundMovement( pPath, tFilter )
 end
 
 ENT.flNextMachineGunShot = 0
@@ -652,10 +652,9 @@ RegisterSchedule( "GRADBunker", {
 		end
 	end,
 
-	OnLeave = function( self, sched, MyTable )
+	OnLeave = function( self, pSchedule, MyTable )
 		MyTable.sCallMeInRunBehaviour = "UnmannedGearGRADBunkerLeave"
 		MyTable.fCallMeInRunBehaviour = function()
-			if !IsValid( self ) then return end
 			if MyTable.m_bInBunkerMode then
 				MyTable.AnimationSystemHalt( self, MyTable )
 				MyTable.m_bInBunkerMode = nil

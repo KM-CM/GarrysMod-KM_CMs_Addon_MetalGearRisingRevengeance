@@ -3,56 +3,61 @@ ENT.m_sIdleSequenceAir = "jump"
 
 ENT.flGravityMultiplierInAir = 3
 
+ENT.vHullMins = Vector( -30, -30 )
+ENT.vHullMaxs = Vector( 30, 30, 150 )
+
 function ENT:ForceTurnAroundLeft( MyTable )
-	local f = math.Rand( .75, 1 )
-	MyTable.flBoneActuatorsTime = math.max( MyTable.flBoneActuatorsTime, CurTime() + self:SequenceDuration( self:LookupSequence "turn_b" ) * f )
+	MyTable.flBoneActuatorsTime = 0
 	MyTable.AnimationSystemHalt( self, MyTable )
-	MyTable.PlaySequenceAndMove( self, "turn_b", -f, nil, function()
+	local f = -math.Rand( .8, 1.2 )
+	MyTable.PlaySequenceAndMove( self, "turn_b", -math.Rand( .75, 1 ), nil, function()
 		MyTable.vaAimTargetBody = nil
 		MyTable.Look( self, MyTable )
 		MyTable.HandleTurning( self, MyTable )
-	end, nil, -math.Rand( .75, 1.25 ), -math.Rand( .75, 1.25 ) )
+	end, nil, f, f )
 end
 
 function ENT:ForceTurnAroundRight( MyTable )
-	local f = math.Rand( .75, 1 )
-	MyTable.flBoneActuatorsTime = math.max( MyTable.flBoneActuatorsTime, CurTime() + self:SequenceDuration( self:LookupSequence "turn_b" ) * f )
+	MyTable.flBoneActuatorsTime = 0
 	MyTable.AnimationSystemHalt( self, MyTable )
-	MyTable.PlaySequenceAndMove( self, "turn_b", f, nil, function()
+	local f = math.Rand( .8, 1.2 )
+	MyTable.PlaySequenceAndMove( self, "turn_b", math.Rand( .75, 1 ), nil, function()
 		MyTable.vaAimTargetBody = nil
 		MyTable.Look( self, MyTable )
 		MyTable.HandleTurning( self, MyTable )
-	end, nil, math.Rand( .75, 1.25 ), math.Rand( .75, 1.25 ) )
+	end, nil, f, f )
 end
 
-function ENT:ForceTurn90Left( MyTable )
-	local f = math.Rand( .75, 1 )
-	MyTable.flBoneActuatorsTime = math.max( MyTable.flBoneActuatorsTime, CurTime() + self:SequenceDuration( self:LookupSequence "turn_l" ) * f )
+function ENT:ForceTurnLeft( MyTable )
+	MyTable.flBoneActuatorsTime = 0
 	MyTable.AnimationSystemHalt( self, MyTable )
-	MyTable.PlaySequenceAndMove( self, "turn_l", f, nil, function()
+	local f = math.Rand( .8, 1.2 )
+	MyTable.PlaySequenceAndMove( self, "turn_l", math.Rand( .75, 1 ), nil, function()
 		MyTable.vaAimTargetBody = nil
 		MyTable.Look( self, MyTable )
 		MyTable.HandleTurning( self, MyTable )
-	end, nil, math.Rand( .75, 1.2 ), math.Rand( .75, 1.2 ) )
+	end, nil, f, f )
 end
 
-function ENT:ForceTurn90Right( MyTable )
+function ENT:ForceTurnRight( MyTable )
 	local f = math.Rand( .75, 1 )
-	MyTable.flBoneActuatorsTime = math.max( MyTable.flBoneActuatorsTime, CurTime() + self:SequenceDuration( self:LookupSequence "turn_r" ) * f )
+	MyTable.flBoneActuatorsTime = 0
 	MyTable.AnimationSystemHalt( self, MyTable )
-	MyTable.PlaySequenceAndMove( self, "turn_r", f, nil, function()
+	local f = math.Rand( .8, 1.2 )
+	MyTable.PlaySequenceAndMove( self, "turn_r", math.Rand( .75, 1 ), nil, function()
 		MyTable.vaAimTargetBody = nil
 		MyTable.Look( self, MyTable )
 		MyTable.HandleTurning( self, MyTable )
-	end, nil, math.Rand( .75, 1.2 ), math.Rand( .75, 1.2 ) )
+	end, nil, f, f )
 end
 
-ENT.flTopSpeed = 512
+ENT.flTopSpeed = 313.5
 ENT.flJogSpeed = ENT.flTopSpeed
-ENT.flWalkSpeed = 96
-ENT.flPowerWalkSpeed = 140
+ENT.flWalkSpeed = 120
+ENT.flFasterWalkSpeed = 135
+ENT.flPowerWalkSpeed = 150
 
-ENT.flChargeSpeed = 820
+ENT.flChargeSpeed = 500
 
 ENT.flJumpHeight = 1536
 
@@ -62,26 +67,23 @@ ENT.flSpeedUpAnimationsWeight = 0
 // TODO: Implement dynamic turning, I guess
 function ENT:MoveAlongPath( pPath, flSpeed, flHeight, tFilter, bAllowSliding, flToleranceOverride, bNoAvoid, fJump, fDrop )
 	local pLocomotion = self.loco
-	pLocomotion:SetDesiredSpeed( flSpeed )
-	local f = self.flTopSpeed * ACCELERATION_NORMAL
-	pLocomotion:SetAcceleration( f )
-	pLocomotion:SetDeceleration( f )
+
 	pLocomotion:SetJumpHeight( self.flJumpHeight )
 
 	local f = GetVelocity( self ):Length()
 	local flMultiplier = 1
 	if CurTime() <= self.flSpeedUpAnimationsTime then flMultiplier = 1 / ( 1 - self.flSpeedUpAnimationsWeight ) end
 
-	if self:IsOnGround() then self.flBoneActuatorsTime = math.max( self.flBoneActuatorsTime, CurTime() + 1 / 3 ) end
+	if self:IsOnGround() then self.flBoneActuatorsTime = math.max( self.flBoneActuatorsTime, CurTime() + .2 ) end
 
-	if f <= 12 || !self:IsOnGround() then
-	elseif f <= ( self.flPowerWalkSpeed * 1.1 ) then
-		self:PromoteSequence( "walk", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "walk" ) * flMultiplier )
+	if !self:IsOnGround() then
+	elseif flSpeed <= ( self.flPowerWalkSpeed * 1.1 ) then
+		self:DoRootMotion( "walk", flSpeed * flMultiplier )
 	else
-		self:PromoteSequence( "run", GetVelocity( self ):Length() / self:GetSequenceGroundSpeed( self:LookupSequence "run" ) * flMultiplier )
+		self:DoRootMotion( "run", flSpeed * flMultiplier )
 	end
 
-	self:GroundMovement( pPath, flSpeed, tFilter, flToleranceOverride, bNoAvoid, fJump, fDrop )
+	self:GroundMovement( pPath, tFilter, flToleranceOverride, bNoAvoid, fJump, fDrop )
 end
 
 ENT.flBoneActuatorsTime = 0
@@ -91,7 +93,7 @@ local vTemp = Vector()
 local aTemp = Angle()
 
 function ENT:ApplyGoddamnBonesFix()
-	local flCurrent = math.Approach( self.flBoneActuatorsCurrent, CurTime() <= self.flBoneActuatorsTime && 1 || 0, 3 * FrameTime() )
+	local flCurrent = math.Approach( self.flBoneActuatorsCurrent, CurTime() <= self.flBoneActuatorsTime && 1 || 0, 4 * FrameTime() )
 	self.flBoneActuatorsCurrent = flCurrent
 
 	local i = self:LookupBone "bone081"
